@@ -10,6 +10,17 @@ git clone https://github.com/TAW-26/TAW-Bartlomiej-Gwozdz_Bartlomiej-Dziedzic.gi
 cd TAW-Bartlomiej-Gwozdz_Bartlomiej-Dziedzic
 ```
 
+### Backend
+
+```bash
+cd server
+npm install
+npm run dev
+```
+
+Backend API: `http://localhost:3000`
+Endpoint testowy: `http://localhost:3000/api/health`
+
 ### Frontend
 
 ```bash
