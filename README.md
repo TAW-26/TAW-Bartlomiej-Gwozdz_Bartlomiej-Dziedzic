@@ -4,7 +4,7 @@
 Projekt to aplikacja webowa do tworzenia, zarządzania i przeglądania wydarzeń lokalnych (np. koncerty, warsztaty, konferencje, inicjatywy społeczne). System łączy organizatorów z uczestnikami i pozwala wyszukiwać wydarzenia po nazwie, lokalizacji lub dacie.
 
 ## Instrukcja uruchomienia
-### Skopiowanie  i przemiesceniedo lokalizacji repozytorium
+### Skopiowanie  i przemieszczenie do lokalizacji repozytorium
 ```bash
 git clone https://github.com/TAW-26/TAW-Bartlomiej-Gwozdz_Bartlomiej-Dziedzic.git
 cd TAW-Bartlomiej-Gwozdz_Bartlomiej-Dziedzic
@@ -13,7 +13,7 @@ cd TAW-Bartlomiej-Gwozdz_Bartlomiej-Dziedzic
 ### Frontend
 
 ```bash
-cd blog
+cd client
 npm install
 ng serve
 ```
