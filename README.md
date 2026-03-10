@@ -13,7 +13,7 @@ cd TAW-Bartlomiej-Gwozdz_Bartlomiej-Dziedzic
 ### Frontend
 
 ```bash
-cd blog
+cd client
 npm install
 ng serve
 ```
