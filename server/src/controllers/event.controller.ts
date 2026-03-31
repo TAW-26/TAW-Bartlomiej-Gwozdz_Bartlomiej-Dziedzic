@@ -1,6 +1,6 @@
 import { EventService } from "../modules/services/event.service";
 import { authorize, isOwnerOrAdmin } from "../middlewares/auth.middleware";
-import { db } from "../store";
+import {getEventById,deleteEvent } from "../store"
 
 export class EventController {
     // GET /events
@@ -16,12 +16,12 @@ export class EventController {
 
     // DELETE /events/:id
     static async delete(req: { userId: string; eventId: string }) {
-        const event = db.getEventById(req.eventId);
+        const event = getEventById(req.eventId);
         if (!event) throw new Error("Wydarzenie nie istnieje");
 
         isOwnerOrAdmin(req.userId, event.organizerId);
 
-        db.deleteEvent(req.eventId);
+        deleteEvent(req.eventId);
         return { success: true };
     }
 }
