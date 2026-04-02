@@ -116,9 +116,7 @@ app.get("/api/events/:id/participants", (req, res) => {
     try {
         const actorId = req.query.actorId;
         if (!actorId || typeof actorId !== "string") {
-            return res
-                .status(400)
-                .json({ error: "actorId query param is required" });
+            return res.status(400).json({ error: "actorId query param is required" });
         }
         const participants = (0, businessLogic_1.listParticipantsForEvent)(actorId, req.params.id);
         return res.json(participants);
@@ -134,7 +132,9 @@ app.post("/api/events/:id/join", (req, res) => {
     try {
         const userId = req.body.userId;
         if (!userId || typeof userId !== "string") {
-            return res.status(400).json({ error: "userId is required in request body" });
+            return res
+                .status(400)
+                .json({ error: "userId is required in request body" });
         }
         const result = (0, businessLogic_1.confirmParticipation)(req.params.id, userId);
         return res.status(201).json(result);
@@ -150,7 +150,9 @@ app.post("/api/events/:id/leave", (req, res) => {
     try {
         const userId = req.body.userId;
         if (!userId || typeof userId !== "string") {
-            return res.status(400).json({ error: "userId is required in request body" });
+            return res
+                .status(400)
+                .json({ error: "userId is required in request body" });
         }
         const result = (0, businessLogic_1.cancelParticipation)(req.params.id, userId);
         return res.json(result);
@@ -158,6 +160,42 @@ app.post("/api/events/:id/leave", (req, res) => {
     catch (error) {
         return res.status(400).json({
             error: error instanceof Error ? error.message : "Failed to leave event",
+        });
+    }
+});
+// GET /api/events/organizer/my-events - lista wlasnych eventow organizatora
+app.get("/api/events/organizer/my-events", (req, res) => {
+    try {
+        const actorId = req.query.actorId;
+        if (!actorId || typeof actorId !== "string") {
+            return res
+                .status(400)
+                .json({ error: "actorId query param is required" });
+        }
+        const events = (0, businessLogic_1.listOrganizerEvents)(actorId);
+        return res.json(events);
+    }
+    catch (error) {
+        return res.status(403).json({
+            error: error instanceof Error ? error.message : "Access denied",
+        });
+    }
+});
+// DELETE /api/events/:id/participants/:userId - usuniecie uczestnika z wydarzenia
+app.delete("/api/events/:id/participants/:userId", (req, res) => {
+    try {
+        const actorId = req.query.actorId;
+        if (!actorId || typeof actorId !== "string") {
+            return res
+                .status(400)
+                .json({ error: "actorId query param is required" });
+        }
+        const result = (0, businessLogic_1.removeParticipantFromEvent)(actorId, req.params.id, req.params.userId);
+        return res.json(result);
+    }
+    catch (error) {
+        return res.status(403).json({
+            error: error instanceof Error ? error.message : "Access denied",
         });
     }
 });
@@ -247,6 +285,32 @@ app.delete("/api/users/:id", (req, res) => {
     catch (error) {
         return res.status(403).json({
             error: error instanceof Error ? error.message : "Failed to delete user",
+        });
+    }
+});
+// ========== MODERATION ENDPOINTS ==========
+// POST /api/moderation/remove-event - moderacja usuniecia wydarzenia przez admina
+app.post("/api/moderation/remove-event", (req, res) => {
+    try {
+        const adminId = req.body.adminId;
+        const eventId = req.body.eventId;
+        const reason = req.body.reason;
+        if (!adminId || typeof adminId !== "string") {
+            return res
+                .status(400)
+                .json({ error: "adminId is required in request body" });
+        }
+        if (!eventId || typeof eventId !== "string") {
+            return res
+                .status(400)
+                .json({ error: "eventId is required in request body" });
+        }
+        const result = (0, businessLogic_1.moderateEventRemoval)(adminId, eventId, reason);
+        return res.status(201).json(result);
+    }
+    catch (error) {
+        return res.status(403).json({
+            error: error instanceof Error ? error.message : "Failed to moderate event",
         });
     }
 });

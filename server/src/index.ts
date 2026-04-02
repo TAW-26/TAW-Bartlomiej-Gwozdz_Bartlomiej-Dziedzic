@@ -13,6 +13,9 @@ import {
   listParticipantsForEvent,
   confirmParticipation,
   cancelParticipation,
+  listOrganizerEvents,
+  removeParticipantFromEvent,
+  moderateEventRemoval,
 } from "./businessLogic";
 import { getUserByEmail } from "./store";
 
@@ -184,6 +187,51 @@ app.post("/api/events/:id/leave", (req: Request, res: Response) => {
   }
 });
 
+// GET /api/events/organizer/my-events - lista wlasnych eventow organizatora
+app.get("/api/events/organizer/my-events", (req: Request, res: Response) => {
+  try {
+    const actorId = req.query.actorId;
+
+    if (!actorId || typeof actorId !== "string") {
+      return res.status(400).json({ error: "actorId query param is required" });
+    }
+
+    const events = listOrganizerEvents(actorId);
+    return res.json(events);
+  } catch (error) {
+    return res.status(403).json({
+      error: error instanceof Error ? error.message : "Access denied",
+    });
+  }
+});
+
+// DELETE /api/events/:id/participants/:userId - usuniecie uczestnika z wydarzenia
+app.delete(
+  "/api/events/:id/participants/:userId",
+  (req: Request, res: Response) => {
+    try {
+      const actorId = req.query.actorId;
+
+      if (!actorId || typeof actorId !== "string") {
+        return res
+          .status(400)
+          .json({ error: "actorId query param is required" });
+      }
+
+      const result = removeParticipantFromEvent(
+        actorId,
+        req.params.id,
+        req.params.userId,
+      );
+      return res.json(result);
+    } catch (error) {
+      return res.status(403).json({
+        error: error instanceof Error ? error.message : "Access denied",
+      });
+    }
+  },
+);
+
 // ========== USER ENDPOINTS ==========
 
 // POST /api/users/register - rejestracja nowego uzytkownika
@@ -279,6 +327,37 @@ app.delete("/api/users/:id", (req: Request, res: Response) => {
   } catch (error) {
     return res.status(403).json({
       error: error instanceof Error ? error.message : "Failed to delete user",
+    });
+  }
+});
+
+// ========== MODERATION ENDPOINTS ==========
+
+// POST /api/moderation/remove-event - moderacja usuniecia wydarzenia przez admina
+app.post("/api/moderation/remove-event", (req: Request, res: Response) => {
+  try {
+    const adminId = req.body.adminId;
+    const eventId = req.body.eventId;
+    const reason = req.body.reason;
+
+    if (!adminId || typeof adminId !== "string") {
+      return res
+        .status(400)
+        .json({ error: "adminId is required in request body" });
+    }
+
+    if (!eventId || typeof eventId !== "string") {
+      return res
+        .status(400)
+        .json({ error: "eventId is required in request body" });
+    }
+
+    const result = moderateEventRemoval(adminId, eventId, reason);
+    return res.status(201).json(result);
+  } catch (error) {
+    return res.status(403).json({
+      error:
+        error instanceof Error ? error.message : "Failed to moderate event",
     });
   }
 });
