@@ -1,4 +1,7 @@
+import fs from "fs";
 import express, { Request, Response } from "express";
+import mongoose from "mongoose";
+import path from "path";
 import {
   browseEvents,
   createOrganizerEvent,
@@ -21,6 +24,58 @@ import { getUserByEmail } from "./store";
 
 const app = express();
 const PORT = 3000;
+
+const loadLocalEnv = (): void => {
+  const envFilePath = path.resolve(__dirname, "../.env");
+
+  if (!fs.existsSync(envFilePath)) {
+    return;
+  }
+
+  const fileContents = fs.readFileSync(envFilePath, "utf8");
+
+  for (const rawLine of fileContents.split(/\r?\n/)) {
+    const line = rawLine.trim();
+
+    if (!line || line.startsWith("#")) {
+      continue;
+    }
+
+    const separatorIndex = line.indexOf("=");
+
+    if (separatorIndex === -1) {
+      continue;
+    }
+
+    const key = line.slice(0, separatorIndex).trim();
+    const value = line.slice(separatorIndex + 1).trim();
+
+    if (key && process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+};
+
+const buildMongoUri = (): string | undefined => {
+  if (process.env.MONGODB_URI) {
+    return process.env.MONGODB_URI;
+  }
+
+  const user = process.env.MONGODB_USER;
+  const password = process.env.MONGODB_PASSWORD;
+  const cluster = process.env.MONGODB_CLUSTER ?? "cluster0.inw1xa4.mongodb.net";
+  const appName = process.env.MONGODB_APP_NAME ?? "Cluster0";
+
+  if (!user || !password) {
+    return undefined;
+  }
+
+  return `mongodb+srv://${encodeURIComponent(user)}:${encodeURIComponent(
+    password,
+  )}@${cluster}/?appName=${encodeURIComponent(appName)}`;
+};
+
+loadLocalEnv();
 
 app.use(express.json());
 
@@ -362,10 +417,34 @@ app.post("/api/moderation/remove-event", (req: Request, res: Response) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
-});
+const startServer = async (): Promise<void> => {
+  const mongoUri = buildMongoUri();
+
+  if (!mongoUri) {
+    console.error(
+      "Missing MongoDB configuration. Set MONGODB_URI or MONGODB_USER and MONGODB_PASSWORD in server/.env.",
+    );
+    process.exit(1);
+  }
+
+  try {
+    await mongoose.connect(mongoUri);
+    console.log("Connected to MongoDB");
+  } catch (error) {
+    console.error(
+      "Failed to connect to MongoDB:",
+      error instanceof Error ? error.message : error,
+    );
+    process.exit(1);
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/api/health`);
+  });
+};
+
+void startServer();
 
 export * from "./types";
 export * from "./store";
