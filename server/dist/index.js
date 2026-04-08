@@ -24,26 +24,33 @@ const path_1 = __importDefault(require("path"));
 const businessLogic_1 = require("./businessLogic");
 const app = (0, express_1.default)();
 const PORT = 3000;
-const loadLocalEnv = () => {
-    const envFilePath = path_1.default.resolve(__dirname, "../.env");
-    if (!fs_1.default.existsSync(envFilePath)) {
+const loadLocalSecrets = () => {
+    const secretsFilePath = path_1.default.resolve(__dirname, "../secrets.json");
+    if (!fs_1.default.existsSync(secretsFilePath)) {
         return;
     }
-    const fileContents = fs_1.default.readFileSync(envFilePath, "utf8");
-    for (const rawLine of fileContents.split(/\r?\n/)) {
-        const line = rawLine.trim();
-        if (!line || line.startsWith("#")) {
-            continue;
+    try {
+        const fileContents = fs_1.default.readFileSync(secretsFilePath, "utf8");
+        const parsed = JSON.parse(fileContents);
+        if (parsed.mongodbUri && process.env.MONGODB_URI === undefined) {
+            process.env.MONGODB_URI = parsed.mongodbUri;
         }
-        const separatorIndex = line.indexOf("=");
-        if (separatorIndex === -1) {
-            continue;
+        if (parsed.mongodbUser && process.env.MONGODB_USER === undefined) {
+            process.env.MONGODB_USER = parsed.mongodbUser;
         }
-        const key = line.slice(0, separatorIndex).trim();
-        const value = line.slice(separatorIndex + 1).trim();
-        if (key && process.env[key] === undefined) {
-            process.env[key] = value;
+        if (parsed.mongodbPassword &&
+            process.env.MONGODB_PASSWORD === undefined) {
+            process.env.MONGODB_PASSWORD = parsed.mongodbPassword;
         }
+        if (parsed.mongodbCluster && process.env.MONGODB_CLUSTER === undefined) {
+            process.env.MONGODB_CLUSTER = parsed.mongodbCluster;
+        }
+        if (parsed.mongodbAppName && process.env.MONGODB_APP_NAME === undefined) {
+            process.env.MONGODB_APP_NAME = parsed.mongodbAppName;
+        }
+    }
+    catch {
+        console.warn("Cannot parse server/secrets.json. Falling back to env vars.");
     }
 };
 const buildMongoUri = () => {
@@ -59,7 +66,7 @@ const buildMongoUri = () => {
     }
     return `mongodb+srv://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${cluster}/?appName=${encodeURIComponent(appName)}`;
 };
-loadLocalEnv();
+loadLocalSecrets();
 app.use(express_1.default.json());
 // Endpoint testowy
 app.get("/api/health", (req, res) => {
@@ -354,7 +361,7 @@ app.post("/api/moderation/remove-event", (req, res) => {
 const startServer = async () => {
     const mongoUri = buildMongoUri();
     if (!mongoUri) {
-        console.error("Missing MongoDB configuration. Set MONGODB_URI or MONGODB_USER and MONGODB_PASSWORD in server/.env.");
+        console.error("Missing MongoDB configuration. Set server/secrets.json (preferred) or env vars MONGODB_URI / MONGODB_USER + MONGODB_PASSWORD.");
         process.exit(1);
     }
     try {

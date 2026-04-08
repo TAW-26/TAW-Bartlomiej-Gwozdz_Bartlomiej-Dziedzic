@@ -25,34 +25,46 @@ import { getUserByEmail } from "./store";
 const app = express();
 const PORT = 3000;
 
-const loadLocalEnv = (): void => {
-  const envFilePath = path.resolve(__dirname, "../.env");
+interface LocalSecrets {
+  mongodbUser?: string;
+  mongodbPassword?: string;
+  mongodbCluster?: string;
+  mongodbAppName?: string;
+  mongodbUri?: string;
+}
 
-  if (!fs.existsSync(envFilePath)) {
+const loadLocalSecrets = (): void => {
+  const secretsFilePath = path.resolve(__dirname, "../secrets.json");
+
+  if (!fs.existsSync(secretsFilePath)) {
     return;
   }
 
-  const fileContents = fs.readFileSync(envFilePath, "utf8");
+  try {
+    const fileContents = fs.readFileSync(secretsFilePath, "utf8");
+    const parsed = JSON.parse(fileContents) as LocalSecrets;
 
-  for (const rawLine of fileContents.split(/\r?\n/)) {
-    const line = rawLine.trim();
-
-    if (!line || line.startsWith("#")) {
-      continue;
+    if (parsed.mongodbUri && process.env.MONGODB_URI === undefined) {
+      process.env.MONGODB_URI = parsed.mongodbUri;
     }
 
-    const separatorIndex = line.indexOf("=");
-
-    if (separatorIndex === -1) {
-      continue;
+    if (parsed.mongodbUser && process.env.MONGODB_USER === undefined) {
+      process.env.MONGODB_USER = parsed.mongodbUser;
     }
 
-    const key = line.slice(0, separatorIndex).trim();
-    const value = line.slice(separatorIndex + 1).trim();
-
-    if (key && process.env[key] === undefined) {
-      process.env[key] = value;
+    if (parsed.mongodbPassword && process.env.MONGODB_PASSWORD === undefined) {
+      process.env.MONGODB_PASSWORD = parsed.mongodbPassword;
     }
+
+    if (parsed.mongodbCluster && process.env.MONGODB_CLUSTER === undefined) {
+      process.env.MONGODB_CLUSTER = parsed.mongodbCluster;
+    }
+
+    if (parsed.mongodbAppName && process.env.MONGODB_APP_NAME === undefined) {
+      process.env.MONGODB_APP_NAME = parsed.mongodbAppName;
+    }
+  } catch {
+    console.warn("Cannot parse server/secrets.json. Falling back to env vars.");
   }
 };
 
@@ -75,7 +87,7 @@ const buildMongoUri = (): string | undefined => {
   )}@${cluster}/?appName=${encodeURIComponent(appName)}`;
 };
 
-loadLocalEnv();
+loadLocalSecrets();
 
 app.use(express.json());
 
@@ -422,7 +434,7 @@ const startServer = async (): Promise<void> => {
 
   if (!mongoUri) {
     console.error(
-      "Missing MongoDB configuration. Set MONGODB_URI or MONGODB_USER and MONGODB_PASSWORD in server/.env.",
+      "Missing MongoDB configuration. Set server/secrets.json (preferred) or env vars MONGODB_URI / MONGODB_USER + MONGODB_PASSWORD.",
     );
     process.exit(1);
   }
