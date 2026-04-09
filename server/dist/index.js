@@ -22,6 +22,7 @@ const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const path_1 = __importDefault(require("path"));
 const businessLogic_1 = require("./businessLogic");
+const store_1 = require("./store");
 const app = (0, express_1.default)();
 const PORT = 3000;
 const loadLocalSecrets = () => {
@@ -38,8 +39,7 @@ const loadLocalSecrets = () => {
         if (parsed.mongodbUser && process.env.MONGODB_USER === undefined) {
             process.env.MONGODB_USER = parsed.mongodbUser;
         }
-        if (parsed.mongodbPassword &&
-            process.env.MONGODB_PASSWORD === undefined) {
+        if (parsed.mongodbPassword && process.env.MONGODB_PASSWORD === undefined) {
             process.env.MONGODB_PASSWORD = parsed.mongodbPassword;
         }
         if (parsed.mongodbCluster && process.env.MONGODB_CLUSTER === undefined) {
@@ -73,9 +73,9 @@ app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "Server is running" });
 });
 // GET /api/events - lista wydarzen z opcjonalnym filtrowaniem
-app.get("/api/events", (req, res) => {
+app.get("/api/events", async (req, res) => {
     try {
-        const events = (0, businessLogic_1.browseEvents)({
+        const events = await (0, businessLogic_1.browseEvents)({
             q: typeof req.query.q === "string" ? req.query.q : undefined,
             city: typeof req.query.city === "string" ? req.query.city : undefined,
             category: typeof req.query.category === "string" ? req.query.category : undefined,
@@ -94,9 +94,9 @@ app.get("/api/events", (req, res) => {
     }
 });
 // GET /api/events/:id - szczegoly pojedynczego wydarzenia
-app.get("/api/events/:id", (req, res) => {
+app.get("/api/events/:id", async (req, res) => {
     try {
-        const details = (0, businessLogic_1.getEventDetails)(req.params.id);
+        const details = await (0, businessLogic_1.getEventDetails)(req.params.id);
         res.json(details);
     }
     catch (error) {
@@ -106,7 +106,7 @@ app.get("/api/events/:id", (req, res) => {
     }
 });
 // POST /api/events - tworzenie wydarzenia
-app.post("/api/events", (req, res) => {
+app.post("/api/events", async (req, res) => {
     try {
         const { organizerId, ...eventInput } = req.body;
         if (!organizerId || typeof organizerId !== "string") {
@@ -114,7 +114,7 @@ app.post("/api/events", (req, res) => {
                 .status(400)
                 .json({ error: "organizerId is required in request body" });
         }
-        const created = (0, businessLogic_1.createOrganizerEvent)(organizerId, eventInput);
+        const created = await (0, businessLogic_1.createOrganizerEvent)(organizerId, eventInput);
         return res.status(201).json(created);
     }
     catch (error) {
@@ -124,7 +124,7 @@ app.post("/api/events", (req, res) => {
     }
 });
 // PUT /api/events/:id - edycja wydarzenia
-app.put("/api/events/:id", (req, res) => {
+app.put("/api/events/:id", async (req, res) => {
     try {
         const { actorId, ...patch } = req.body;
         if (!actorId || typeof actorId !== "string") {
@@ -132,7 +132,7 @@ app.put("/api/events/:id", (req, res) => {
                 .status(400)
                 .json({ error: "actorId is required in request body" });
         }
-        const updated = (0, businessLogic_1.editOrganizerEvent)(actorId, req.params.id, patch);
+        const updated = await (0, businessLogic_1.editOrganizerEvent)(actorId, req.params.id, patch);
         return res.json(updated);
     }
     catch (error) {
@@ -142,13 +142,13 @@ app.put("/api/events/:id", (req, res) => {
     }
 });
 // DELETE /api/events/:id - usuniecie wydarzenia
-app.delete("/api/events/:id", (req, res) => {
+app.delete("/api/events/:id", async (req, res) => {
     try {
         const actorId = req.query.actorId;
         if (!actorId || typeof actorId !== "string") {
             return res.status(400).json({ error: "actorId query param is required" });
         }
-        (0, businessLogic_1.removeEvent)(actorId, req.params.id);
+        await (0, businessLogic_1.removeEvent)(actorId, req.params.id);
         return res.status(204).send();
     }
     catch (error) {
@@ -158,13 +158,13 @@ app.delete("/api/events/:id", (req, res) => {
     }
 });
 // GET /api/events/:id/participants - lista uczestnikow (tylko dla organizatora/admina)
-app.get("/api/events/:id/participants", (req, res) => {
+app.get("/api/events/:id/participants", async (req, res) => {
     try {
         const actorId = req.query.actorId;
         if (!actorId || typeof actorId !== "string") {
             return res.status(400).json({ error: "actorId query param is required" });
         }
-        const participants = (0, businessLogic_1.listParticipantsForEvent)(actorId, req.params.id);
+        const participants = await (0, businessLogic_1.listParticipantsForEvent)(actorId, req.params.id);
         return res.json(participants);
     }
     catch (error) {
@@ -174,7 +174,7 @@ app.get("/api/events/:id/participants", (req, res) => {
     }
 });
 // POST /api/events/:id/join - dolaczenie do wydarzenia
-app.post("/api/events/:id/join", (req, res) => {
+app.post("/api/events/:id/join", async (req, res) => {
     try {
         const userId = req.body.userId;
         if (!userId || typeof userId !== "string") {
@@ -182,7 +182,7 @@ app.post("/api/events/:id/join", (req, res) => {
                 .status(400)
                 .json({ error: "userId is required in request body" });
         }
-        const result = (0, businessLogic_1.confirmParticipation)(req.params.id, userId);
+        const result = await (0, businessLogic_1.confirmParticipation)(req.params.id, userId);
         return res.status(201).json(result);
     }
     catch (error) {
@@ -192,7 +192,7 @@ app.post("/api/events/:id/join", (req, res) => {
     }
 });
 // POST /api/events/:id/leave - rezygnacja z wydarzenia
-app.post("/api/events/:id/leave", (req, res) => {
+app.post("/api/events/:id/leave", async (req, res) => {
     try {
         const userId = req.body.userId;
         if (!userId || typeof userId !== "string") {
@@ -200,7 +200,7 @@ app.post("/api/events/:id/leave", (req, res) => {
                 .status(400)
                 .json({ error: "userId is required in request body" });
         }
-        const result = (0, businessLogic_1.cancelParticipation)(req.params.id, userId);
+        const result = await (0, businessLogic_1.cancelParticipation)(req.params.id, userId);
         return res.json(result);
     }
     catch (error) {
@@ -210,13 +210,13 @@ app.post("/api/events/:id/leave", (req, res) => {
     }
 });
 // GET /api/events/organizer/my-events - lista wlasnych eventow organizatora
-app.get("/api/events/organizer/my-events", (req, res) => {
+app.get("/api/events/organizer/my-events", async (req, res) => {
     try {
         const actorId = req.query.actorId;
         if (!actorId || typeof actorId !== "string") {
             return res.status(400).json({ error: "actorId query param is required" });
         }
-        const events = (0, businessLogic_1.listOrganizerEvents)(actorId);
+        const events = await (0, businessLogic_1.listOrganizerEvents)(actorId);
         return res.json(events);
     }
     catch (error) {
@@ -226,7 +226,7 @@ app.get("/api/events/organizer/my-events", (req, res) => {
     }
 });
 // DELETE /api/events/:id/participants/:userId - usuniecie uczestnika z wydarzenia
-app.delete("/api/events/:id/participants/:userId", (req, res) => {
+app.delete("/api/events/:id/participants/:userId", async (req, res) => {
     try {
         const actorId = req.query.actorId;
         if (!actorId || typeof actorId !== "string") {
@@ -234,7 +234,7 @@ app.delete("/api/events/:id/participants/:userId", (req, res) => {
                 .status(400)
                 .json({ error: "actorId query param is required" });
         }
-        const result = (0, businessLogic_1.removeParticipantFromEvent)(actorId, req.params.id, req.params.userId);
+        const result = await (0, businessLogic_1.removeParticipantFromEvent)(actorId, req.params.id, req.params.userId);
         return res.json(result);
     }
     catch (error) {
@@ -245,9 +245,9 @@ app.delete("/api/events/:id/participants/:userId", (req, res) => {
 });
 // ========== USER ENDPOINTS ==========
 // POST /api/users/register - rejestracja nowego uzytkownika
-app.post("/api/users/register", (req, res) => {
+app.post("/api/users/register", async (req, res) => {
     try {
-        const user = (0, businessLogic_1.registerUser)({
+        const user = await (0, businessLogic_1.registerUser)({
             email: req.body.email,
             password: req.body.password,
             confirmPassword: req.body.confirmPassword,
@@ -262,9 +262,9 @@ app.post("/api/users/register", (req, res) => {
     }
 });
 // POST /api/users/login - logowanie uzytkownika
-app.post("/api/users/login", (req, res) => {
+app.post("/api/users/login", async (req, res) => {
     try {
-        const user = (0, businessLogic_1.loginUser)({
+        const user = await (0, businessLogic_1.loginUser)({
             email: req.body.email,
             password: req.body.password,
         });
@@ -277,13 +277,13 @@ app.post("/api/users/login", (req, res) => {
     }
 });
 // GET /api/users - lista wszystkich uzytkownikow (tylko admin)
-app.get("/api/users", (req, res) => {
+app.get("/api/users", async (req, res) => {
     try {
         const adminId = req.query.adminId;
         if (!adminId || typeof adminId !== "string") {
             return res.status(400).json({ error: "adminId query param is required" });
         }
-        const users = (0, businessLogic_1.listUsersForAdmin)(adminId);
+        const users = await (0, businessLogic_1.listUsersForAdmin)(adminId);
         return res.json(users);
     }
     catch (error) {
@@ -293,7 +293,7 @@ app.get("/api/users", (req, res) => {
     }
 });
 // PUT /api/users/:id/role - zmiana roli uzytkownika (tylko admin)
-app.put("/api/users/:id/role", (req, res) => {
+app.put("/api/users/:id/role", async (req, res) => {
     try {
         const adminId = req.body.adminId;
         const newRole = req.body.role;
@@ -307,7 +307,7 @@ app.put("/api/users/:id/role", (req, res) => {
                 .status(400)
                 .json({ error: "role is required in request body" });
         }
-        const updated = (0, businessLogic_1.changeUserRole)(adminId, req.params.id, newRole);
+        const updated = await (0, businessLogic_1.changeUserRole)(adminId, req.params.id, newRole);
         return res.json(updated);
     }
     catch (error) {
@@ -317,13 +317,13 @@ app.put("/api/users/:id/role", (req, res) => {
     }
 });
 // DELETE /api/users/:id - usuniecie uzytkownika (tylko admin)
-app.delete("/api/users/:id", (req, res) => {
+app.delete("/api/users/:id", async (req, res) => {
     try {
         const adminId = req.query.adminId;
         if (!adminId || typeof adminId !== "string") {
             return res.status(400).json({ error: "adminId query param is required" });
         }
-        (0, businessLogic_1.removeUserByAdmin)(adminId, req.params.id);
+        await (0, businessLogic_1.removeUserByAdmin)(adminId, req.params.id);
         return res.status(204).send();
     }
     catch (error) {
@@ -334,7 +334,7 @@ app.delete("/api/users/:id", (req, res) => {
 });
 // ========== MODERATION ENDPOINTS ==========
 // POST /api/moderation/remove-event - moderacja usuniecia wydarzenia przez admina
-app.post("/api/moderation/remove-event", (req, res) => {
+app.post("/api/moderation/remove-event", async (req, res) => {
     try {
         const adminId = req.body.adminId;
         const eventId = req.body.eventId;
@@ -349,7 +349,7 @@ app.post("/api/moderation/remove-event", (req, res) => {
                 .status(400)
                 .json({ error: "eventId is required in request body" });
         }
-        const result = (0, businessLogic_1.moderateEventRemoval)(adminId, eventId, reason);
+        const result = await (0, businessLogic_1.moderateEventRemoval)(adminId, eventId, reason);
         return res.status(201).json(result);
     }
     catch (error) {
@@ -367,6 +367,7 @@ const startServer = async () => {
     try {
         await mongoose_1.default.connect(mongoUri);
         console.log("Connected to MongoDB");
+        await (0, store_1.ensureAdminSeed)();
     }
     catch (error) {
         console.error("Failed to connect to MongoDB:", error instanceof Error ? error.message : error);
