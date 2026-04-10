@@ -11,16 +11,16 @@ class EventController {
     }
     // POST /events
     static async create(req) {
-        (0, auth_middleware_1.authorize)(req.userId, ["organizer", "admin"]);
+        await (0, auth_middleware_1.authorize)(req.userId, ["organizer", "admin"]);
         return event_service_1.EventService.create(req.userId, req.body);
     }
     // DELETE /events/:id
     static async delete(req) {
-        const event = (0, store_1.getEventById)(req.eventId);
+        const event = await (0, store_1.getEventById)(req.eventId);
         if (!event)
             throw new Error("Wydarzenie nie istnieje");
-        (0, auth_middleware_1.isOwnerOrAdmin)(req.userId, event.organizerId);
-        (0, store_1.deleteEvent)(req.eventId);
+        await (0, auth_middleware_1.isOwnerOrAdmin)(req.userId, event.organizerId);
+        await (0, store_1.deleteEvent)(req.eventId);
         return { success: true };
     }
     // UC03: Podgląd szczegółów
@@ -37,18 +37,18 @@ class EventController {
     }
     // UC09: Edycja
     static async update(req) {
-        const event = (0, store_1.getEventById)(req.eventId);
+        const event = await (0, store_1.getEventById)(req.eventId);
         if (!event)
             throw new Error("Wydarzenie nie istnieje");
-        (0, auth_middleware_1.isOwnerOrAdmin)(req.userId, event.organizerId);
+        await (0, auth_middleware_1.isOwnerOrAdmin)(req.userId, event.organizerId);
         return event_service_1.EventService.update(req.eventId, req.body);
     }
     // UC11: Zarządzanie uczestnikami
     static async listParticipants(req) {
-        const event = (0, store_1.getEventById)(req.eventId);
+        const event = await (0, store_1.getEventById)(req.eventId);
         if (!event)
             throw new Error("Wydarzenie nie istnieje");
-        (0, auth_middleware_1.isOwnerOrAdmin)(req.userId, event.organizerId);
+        await (0, auth_middleware_1.isOwnerOrAdmin)(req.userId, event.organizerId);
         return event_service_1.EventService.getParticipants(req.eventId);
     }
 }

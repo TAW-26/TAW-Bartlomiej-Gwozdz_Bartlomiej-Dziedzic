@@ -1,11 +1,54 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toSafeEventView = exports.logModerationAction = exports.listEventParticipants = exports.removeParticipant = exports.addParticipant = exports.deleteEvent = exports.updateEvent = exports.listEventsByOrganizer = exports.listEvents = exports.getEventById = exports.createEvent = exports.deleteUser = exports.updateUser = exports.getPublicUsers = exports.getPublicUserById = exports.getUserById = exports.getUserByEmail = exports.createUser = exports.db = void 0;
-const crypto_1 = require("crypto");
-const users = [];
-const events = [];
-const moderationLog = [];
-const nowIso = () => new Date().toISOString();
+exports.toSafeEventView = exports.logModerationAction = exports.listEventParticipants = exports.removeParticipant = exports.addParticipant = exports.deleteEvent = exports.updateEvent = exports.listEventsByOrganizer = exports.listEvents = exports.getEventById = exports.createEvent = exports.deleteUser = exports.updateUser = exports.getPublicUsers = exports.getPublicUserById = exports.getUserById = exports.getUserByEmail = exports.createUser = exports.ensureAdminSeed = exports.db = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
+const userSchema = new mongoose_1.default.Schema({
+    email: { type: String, required: true, unique: true, lowercase: true },
+    password: { type: String, required: true },
+    fullName: { type: String },
+    role: {
+        type: String,
+        enum: ["user", "organizer", "admin"],
+        required: true,
+        default: "user",
+    },
+    createdAt: { type: Date, required: true, default: Date.now },
+}, { versionKey: false });
+const eventSchema = new mongoose_1.default.Schema({
+    name: { type: String, required: true },
+    description: { type: String, required: true },
+    startsAt: { type: Date, required: true },
+    endsAt: { type: Date, required: true },
+    location: { type: String, required: true },
+    city: { type: String, required: true },
+    category: { type: String, required: true },
+    maxParticipants: { type: Number },
+    imageUrl: { type: String },
+    organizerId: { type: String, required: true },
+    status: { type: String, enum: ["open", "closed"], default: "open" },
+    participants: { type: [String], default: [] },
+}, { timestamps: true, versionKey: false });
+const moderationActionSchema = new mongoose_1.default.Schema({
+    adminId: { type: String, required: true },
+    eventId: { type: String, required: true },
+    action: {
+        type: String,
+        enum: ["remove_event"],
+        required: true,
+        default: "remove_event",
+    },
+    reason: { type: String },
+    createdAt: { type: Date, required: true, default: Date.now },
+}, { versionKey: false });
+const UserModel = mongoose_1.default.models.User ||
+    mongoose_1.default.model("User", userSchema);
+const EventModel = mongoose_1.default.models.Event ||
+    mongoose_1.default.model("Event", eventSchema);
+const ModerationActionModel = mongoose_1.default.models.ModerationAction ||
+    mongoose_1.default.model("ModerationAction", moderationActionSchema);
 const sanitizeUser = (user) => ({
     id: user.id,
     email: user.email,
@@ -30,90 +73,105 @@ const toEventView = (event) => ({
     createdAt: event.createdAt,
     updatedAt: event.updatedAt,
 });
-const seedAdmin = () => {
-    if (users.some((item) => item.role === "admin")) {
+const mapUserDocument = (doc) => ({
+    id: doc._id.toString(),
+    email: doc.email,
+    password: doc.password,
+    fullName: doc.fullName,
+    role: doc.role,
+    createdAt: doc.createdAt.toISOString(),
+});
+const mapEventDocument = (doc) => ({
+    id: doc._id.toString(),
+    name: doc.name,
+    description: doc.description,
+    startsAt: doc.startsAt.toISOString(),
+    endsAt: doc.endsAt.toISOString(),
+    location: doc.location,
+    city: doc.city,
+    category: doc.category,
+    maxParticipants: doc.maxParticipants,
+    imageUrl: doc.imageUrl,
+    organizerId: doc.organizerId,
+    status: doc.status,
+    participants: doc.participants,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString(),
+});
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+exports.db = {
+    UserModel,
+    EventModel,
+    ModerationActionModel,
+};
+const ensureAdminSeed = async () => {
+    const existing = await UserModel.findOne({ role: "admin" }).exec();
+    if (existing) {
         return;
     }
-    users.push({
-        id: (0, crypto_1.randomUUID)(),
+    await UserModel.create({
         email: "admin@local-events.app",
         password: "admin1234",
         fullName: "System Administrator",
         role: "admin",
-        createdAt: nowIso(),
     });
 };
-seedAdmin();
-exports.db = {
-    users,
-    events,
-    moderationLog,
-};
-const createUser = (input) => {
-    const user = {
-        id: (0, crypto_1.randomUUID)(),
+exports.ensureAdminSeed = ensureAdminSeed;
+const createUser = async (input) => {
+    const created = await UserModel.create({
         email: input.email.toLowerCase().trim(),
         password: input.password,
         fullName: input.fullName,
         role: input.role ?? "user",
-        createdAt: nowIso(),
-    };
-    users.push(user);
-    return sanitizeUser(user);
+    });
+    return sanitizeUser(mapUserDocument(created));
 };
 exports.createUser = createUser;
-const getUserByEmail = (email) => users.find((user) => user.email === email.toLowerCase().trim());
+const getUserByEmail = async (email) => {
+    const user = await UserModel.findOne({ email: email.toLowerCase().trim() }).exec();
+    return user ? mapUserDocument(user) : undefined;
+};
 exports.getUserByEmail = getUserByEmail;
-const getUserById = (id) => users.find((user) => user.id === id);
+const getUserById = async (id) => {
+    const user = await UserModel.findById(id).exec();
+    return user ? mapUserDocument(user) : undefined;
+};
 exports.getUserById = getUserById;
-const getPublicUserById = (id) => {
-    const user = (0, exports.getUserById)(id);
+const getPublicUserById = async (id) => {
+    const user = await (0, exports.getUserById)(id);
     return user ? sanitizeUser(user) : undefined;
 };
 exports.getPublicUserById = getPublicUserById;
-const getPublicUsers = () => users.map(sanitizeUser);
+const getPublicUsers = async () => {
+    const users = await UserModel.find({}).exec();
+    return users.map((user) => sanitizeUser(mapUserDocument(user)));
+};
 exports.getPublicUsers = getPublicUsers;
-const updateUser = (id, patch) => {
-    const user = (0, exports.getUserById)(id);
-    if (!user) {
-        return undefined;
-    }
-    if (patch.fullName !== undefined) {
-        user.fullName = patch.fullName;
-    }
-    if (patch.password !== undefined) {
-        user.password = patch.password;
-    }
-    if (patch.role !== undefined) {
-        user.role = patch.role;
-    }
-    return sanitizeUser(user);
+const updateUser = async (id, patch) => {
+    const updated = await UserModel.findByIdAndUpdate(id, {
+        ...(patch.fullName !== undefined ? { fullName: patch.fullName } : {}),
+        ...(patch.password !== undefined ? { password: patch.password } : {}),
+        ...(patch.role !== undefined ? { role: patch.role } : {}),
+    }, { new: true }).exec();
+    return updated ? sanitizeUser(mapUserDocument(updated)) : undefined;
 };
 exports.updateUser = updateUser;
-const deleteUser = (id) => {
-    const index = users.findIndex((user) => user.id === id);
-    if (index === -1) {
+const deleteUser = async (id) => {
+    const deleted = await UserModel.findByIdAndDelete(id).exec();
+    if (!deleted) {
         return false;
     }
-    users.splice(index, 1);
-    for (let idx = events.length - 1; idx >= 0; idx -= 1) {
-        if (events[idx].organizerId === id) {
-            events.splice(idx, 1);
-            continue;
-        }
-        events[idx].participants = events[idx].participants.filter((participantId) => participantId !== id);
-    }
+    await EventModel.deleteMany({ organizerId: id }).exec();
+    await EventModel.updateMany({}, { $pull: { participants: id } }).exec();
     return true;
 };
 exports.deleteUser = deleteUser;
-const createEvent = (input) => {
-    const createdAt = nowIso();
-    const event = {
-        id: (0, crypto_1.randomUUID)(),
+const createEvent = async (input) => {
+    const created = await EventModel.create({
         name: input.name,
         description: input.description,
-        startsAt: input.startsAt,
-        endsAt: input.endsAt,
+        startsAt: new Date(input.startsAt),
+        endsAt: new Date(input.endsAt),
         location: input.location,
         city: input.city,
         category: input.category,
@@ -122,49 +180,44 @@ const createEvent = (input) => {
         organizerId: input.organizerId,
         status: input.status,
         participants: [],
-        createdAt,
-        updatedAt: createdAt,
-    };
-    events.push(event);
-    return toEventView(event);
+    });
+    return toEventView(mapEventDocument(created));
 };
 exports.createEvent = createEvent;
-const getEventById = (id) => events.find((event) => event.id === id);
+const getEventById = async (id) => {
+    const event = await EventModel.findById(id).exec();
+    return event ? mapEventDocument(event) : undefined;
+};
 exports.getEventById = getEventById;
-const listEvents = (filters) => {
-    const fromDate = filters.from ? new Date(filters.from) : undefined;
-    const toDate = filters.to ? new Date(filters.to) : undefined;
+const listEvents = async (filters) => {
+    const query = {};
+    if (filters.q?.trim()) {
+        const qRegex = new RegExp(escapeRegex(filters.q.trim()), "i");
+        query.$or = [
+            { name: qRegex },
+            { description: qRegex },
+            { location: qRegex },
+            { city: qRegex },
+        ];
+    }
+    if (filters.city?.trim()) {
+        query.city = new RegExp(`^${escapeRegex(filters.city.trim())}$`, "i");
+    }
+    if (filters.category?.trim()) {
+        query.category = new RegExp(`^${escapeRegex(filters.category.trim())}$`, "i");
+    }
+    if (filters.status) {
+        query.status = filters.status;
+    }
+    if (filters.from || filters.to) {
+        query.startsAt = {
+            ...(filters.from ? { $gte: new Date(filters.from) } : {}),
+            ...(filters.to ? { $lte: new Date(filters.to) } : {}),
+        };
+    }
+    const events = await EventModel.find(query).exec();
     return events
-        .filter((event) => {
-        if (filters.q) {
-            const q = filters.q.toLowerCase().trim();
-            const match = event.name.toLowerCase().includes(q) ||
-                event.description.toLowerCase().includes(q) ||
-                event.location.toLowerCase().includes(q) ||
-                event.city.toLowerCase().includes(q);
-            if (!match) {
-                return false;
-            }
-        }
-        if (filters.city &&
-            event.city.toLowerCase() !== filters.city.toLowerCase()) {
-            return false;
-        }
-        if (filters.category &&
-            event.category.toLowerCase() !== filters.category.toLowerCase()) {
-            return false;
-        }
-        if (filters.status && event.status !== filters.status) {
-            return false;
-        }
-        if (fromDate && new Date(event.startsAt) < fromDate) {
-            return false;
-        }
-        if (toDate && new Date(event.startsAt) > toDate) {
-            return false;
-        }
-        return true;
-    })
+        .map(mapEventDocument)
         .sort((left, right) => {
         const leftPopularity = left.participants.length;
         const rightPopularity = right.participants.length;
@@ -176,58 +229,38 @@ const listEvents = (filters) => {
         .map(toEventView);
 };
 exports.listEvents = listEvents;
-const listEventsByOrganizer = (organizerId) => events.filter((event) => event.organizerId === organizerId).map(toEventView);
+const listEventsByOrganizer = async (organizerId) => {
+    const events = await EventModel.find({ organizerId }).exec();
+    return events.map(mapEventDocument).map(toEventView);
+};
 exports.listEventsByOrganizer = listEventsByOrganizer;
-const updateEvent = (id, patch) => {
-    const event = (0, exports.getEventById)(id);
-    if (!event) {
-        return undefined;
-    }
-    if (patch.name !== undefined) {
-        event.name = patch.name;
-    }
-    if (patch.description !== undefined) {
-        event.description = patch.description;
-    }
-    if (patch.startsAt !== undefined) {
-        event.startsAt = patch.startsAt;
-    }
-    if (patch.endsAt !== undefined) {
-        event.endsAt = patch.endsAt;
-    }
-    if (patch.location !== undefined) {
-        event.location = patch.location;
-    }
-    if (patch.city !== undefined) {
-        event.city = patch.city;
-    }
-    if (patch.category !== undefined) {
-        event.category = patch.category;
-    }
-    if (patch.maxParticipants !== undefined) {
-        event.maxParticipants = patch.maxParticipants;
-    }
-    if (patch.imageUrl !== undefined) {
-        event.imageUrl = patch.imageUrl;
-    }
-    if (patch.status !== undefined) {
-        event.status = patch.status;
-    }
-    event.updatedAt = nowIso();
-    return toEventView(event);
+const updateEvent = async (id, patch) => {
+    const updated = await EventModel.findByIdAndUpdate(id, {
+        ...(patch.name !== undefined ? { name: patch.name } : {}),
+        ...(patch.description !== undefined
+            ? { description: patch.description }
+            : {}),
+        ...(patch.startsAt !== undefined ? { startsAt: new Date(patch.startsAt) } : {}),
+        ...(patch.endsAt !== undefined ? { endsAt: new Date(patch.endsAt) } : {}),
+        ...(patch.location !== undefined ? { location: patch.location } : {}),
+        ...(patch.city !== undefined ? { city: patch.city } : {}),
+        ...(patch.category !== undefined ? { category: patch.category } : {}),
+        ...(patch.maxParticipants !== undefined
+            ? { maxParticipants: patch.maxParticipants }
+            : {}),
+        ...(patch.imageUrl !== undefined ? { imageUrl: patch.imageUrl } : {}),
+        ...(patch.status !== undefined ? { status: patch.status } : {}),
+    }, { new: true }).exec();
+    return updated ? toEventView(mapEventDocument(updated)) : undefined;
 };
 exports.updateEvent = updateEvent;
-const deleteEvent = (id) => {
-    const index = events.findIndex((event) => event.id === id);
-    if (index === -1) {
-        return false;
-    }
-    events.splice(index, 1);
-    return true;
+const deleteEvent = async (id) => {
+    const deleted = await EventModel.findByIdAndDelete(id).exec();
+    return Boolean(deleted);
 };
 exports.deleteEvent = deleteEvent;
-const addParticipant = (eventId, userId) => {
-    const event = (0, exports.getEventById)(eventId);
+const addParticipant = async (eventId, userId) => {
+    const event = await EventModel.findById(eventId).exec();
     if (!event) {
         return "not_found";
     }
@@ -237,51 +270,51 @@ const addParticipant = (eventId, userId) => {
     if (event.participants.includes(userId)) {
         return "already_joined";
     }
-    if (event.maxParticipants &&
-        event.participants.length >= event.maxParticipants) {
+    if (event.maxParticipants && event.participants.length >= event.maxParticipants) {
         return "full";
     }
     event.participants.push(userId);
-    event.updatedAt = nowIso();
-    return toEventView(event);
+    await event.save();
+    return toEventView(mapEventDocument(event));
 };
 exports.addParticipant = addParticipant;
-const removeParticipant = (eventId, userId) => {
-    const event = (0, exports.getEventById)(eventId);
+const removeParticipant = async (eventId, userId) => {
+    const event = await EventModel.findById(eventId).exec();
     if (!event) {
         return "not_found";
     }
-    const hadUser = event.participants.includes(userId);
-    if (!hadUser) {
+    if (!event.participants.includes(userId)) {
         return "not_joined";
     }
     event.participants = event.participants.filter((participantId) => participantId !== userId);
-    event.updatedAt = nowIso();
-    return toEventView(event);
+    await event.save();
+    return toEventView(mapEventDocument(event));
 };
 exports.removeParticipant = removeParticipant;
-const listEventParticipants = (eventId) => {
-    const event = (0, exports.getEventById)(eventId);
+const listEventParticipants = async (eventId) => {
+    const event = await EventModel.findById(eventId).exec();
     if (!event) {
         return undefined;
     }
-    return event.participants
-        .map((participantId) => (0, exports.getUserById)(participantId))
-        .filter((user) => Boolean(user))
-        .map(sanitizeUser);
+    const users = await UserModel.find({ _id: { $in: event.participants } }).exec();
+    return users.map((user) => sanitizeUser(mapUserDocument(user)));
 };
 exports.listEventParticipants = listEventParticipants;
-const logModerationAction = (input) => {
-    const action = {
-        id: (0, crypto_1.randomUUID)(),
+const logModerationAction = async (input) => {
+    const created = await ModerationActionModel.create({
         adminId: input.adminId,
         eventId: input.eventId,
         action: "remove_event",
         reason: input.reason,
-        createdAt: nowIso(),
+    });
+    return {
+        id: created._id.toString(),
+        adminId: created.adminId,
+        eventId: created.eventId,
+        action: created.action,
+        reason: created.reason,
+        createdAt: created.createdAt.toISOString(),
     };
-    moderationLog.push(action);
-    return action;
 };
 exports.logModerationAction = logModerationAction;
 const toSafeEventView = (event) => toEventView(event);

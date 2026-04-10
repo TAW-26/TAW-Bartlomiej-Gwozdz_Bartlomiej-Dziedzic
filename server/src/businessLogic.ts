@@ -63,16 +63,19 @@ export interface UpdateEventInput {
   status?: EventStatus;
 }
 
-export const registerUser = (input: {
+export const registerUser = async (input: {
   email: string;
   password: string;
   confirmPassword: string;
   fullName?: string;
-}): PublicUser => {
+}): Promise<PublicUser> => {
   assert(Boolean(input.email?.trim()), "E-mail is required");
   assert(input.password.length >= 8, "Password must be at least 8 characters");
   assert(input.password === input.confirmPassword, "Passwords must match");
-  assert(!getUserByEmail(input.email), "User with this e-mail already exists");
+  assert(
+    !(await getUserByEmail(input.email)),
+    "User with this e-mail already exists",
+  );
 
   return createUser({
     email: input.email,
@@ -82,11 +85,11 @@ export const registerUser = (input: {
   });
 };
 
-export const loginUser = (input: {
+export const loginUser = async (input: {
   email: string;
   password: string;
-}): PublicUser => {
-  const user = getUserByEmail(input.email);
+}): Promise<PublicUser> => {
+  const user = await getUserByEmail(input.email);
   assert(Boolean(user), "Invalid e-mail or password");
   assert(user?.password === input.password, "Invalid e-mail or password");
 
@@ -99,36 +102,38 @@ export const loginUser = (input: {
   };
 };
 
-export const browseEvents = (filters: EventFilters = {}): EventView[] =>
-  listEvents(filters);
+export const browseEvents = async (
+  filters: EventFilters = {},
+): Promise<EventView[]> => listEvents(filters);
 
-export const getEventDetails = (
+export const getEventDetails = async (
   eventId: string,
-): {
+): Promise<{
   event: EventView;
   organizer?: PublicUser;
-} => {
-  const event = getEventById(eventId);
+}> => {
+  const event = await getEventById(eventId);
   assert(Boolean(event), "Event not found");
 
-  const organizer = getPublicUserById(event!.organizerId);
+  const organizer = await getPublicUserById(event!.organizerId);
   return {
     event: toSafeEventView(event!),
     organizer,
   };
 };
 
-export const confirmParticipation = (
+export const confirmParticipation = async (
   eventId: string,
   userId: string,
-): EventView => {
-  assert(Boolean(getUserById(userId)), "User not found");
+): Promise<EventView> => {
+  assert(Boolean(await getUserById(userId)), "User not found");
 
-  const result = addParticipant(eventId, userId);
+  const result = await addParticipant(eventId, userId);
   assert(result !== "not_found", "Event not found");
   assert(result !== "closed", "Event is closed");
   assert(result !== "full", "Event reached maximum number of participants");
   assert(result !== "already_joined", "User already joined this event");
+
   if (typeof result === "string") {
     throw new Error("Unexpected participation state");
   }
@@ -136,13 +141,14 @@ export const confirmParticipation = (
   return result;
 };
 
-export const cancelParticipation = (
+export const cancelParticipation = async (
   eventId: string,
   userId: string,
-): EventView => {
-  const result = removeParticipant(eventId, userId);
+): Promise<EventView> => {
+  const result = await removeParticipant(eventId, userId);
   assert(result !== "not_found", "Event not found");
   assert(result !== "not_joined", "User is not a participant of this event");
+
   if (typeof result === "string") {
     throw new Error("Unexpected participation state");
   }
@@ -150,11 +156,11 @@ export const cancelParticipation = (
   return result;
 };
 
-export const createOrganizerEvent = (
+export const createOrganizerEvent = async (
   organizerId: string,
   input: CreateEventInput,
-): EventView => {
-  const organizer = getUserById(organizerId);
+): Promise<EventView> => {
+  const organizer = await getUserById(organizerId);
   assert(Boolean(organizer), "Organizer not found");
   assert(
     organizer!.role === "organizer" || organizer!.role === "admin",
@@ -174,15 +180,15 @@ export const createOrganizerEvent = (
   });
 };
 
-export const editOrganizerEvent = (
+export const editOrganizerEvent = async (
   actorId: string,
   eventId: string,
   patch: UpdateEventInput,
-): EventView => {
-  const actor = getUserById(actorId);
+): Promise<EventView> => {
+  const actor = await getUserById(actorId);
   assert(Boolean(actor), "Actor not found");
 
-  const event = getEventById(eventId);
+  const event = await getEventById(eventId);
   assert(Boolean(event), "Event not found");
 
   const isOwner = event!.organizerId === actorId;
@@ -193,37 +199,43 @@ export const editOrganizerEvent = (
     ? normalizeIso(patch.startsAt)
     : event!.startsAt;
   const endsAt = patch.endsAt ? normalizeIso(patch.endsAt) : event!.endsAt;
+
   assert(
     new Date(endsAt) > new Date(startsAt),
     "endsAt must be greater than startsAt",
   );
 
-  const updated = updateEvent(eventId, {
+  const updated = await updateEvent(eventId, {
     ...patch,
     startsAt: patch.startsAt ? startsAt : undefined,
     endsAt: patch.endsAt ? endsAt : undefined,
   });
-  assert(Boolean(updated), "Event not found");
 
+  assert(Boolean(updated), "Event not found");
   return updated!;
 };
 
-export const removeEvent = (actorId: string, eventId: string): void => {
-  const actor = getUserById(actorId);
+export const removeEvent = async (
+  actorId: string,
+  eventId: string,
+): Promise<void> => {
+  const actor = await getUserById(actorId);
   assert(Boolean(actor), "Actor not found");
 
-  const event = getEventById(eventId);
+  const event = await getEventById(eventId);
   assert(Boolean(event), "Event not found");
 
   const isOwner = event!.organizerId === actorId;
   const isAdmin = actor!.role === "admin";
   assert(isOwner || isAdmin, "Only owner or admin can delete this event");
 
-  deleteEvent(eventId);
+  await deleteEvent(eventId);
 };
 
-export const listOrganizerEvents = (actorId: string): EventView[] => {
-  const actor = getUserById(actorId);
+export const listOrganizerEvents = async (
+  actorId: string,
+): Promise<EventView[]> => {
+  const actor = await getUserById(actorId);
   assert(Boolean(actor), "Actor not found");
 
   if (actor!.role === "admin") {
@@ -234,44 +246,46 @@ export const listOrganizerEvents = (actorId: string): EventView[] => {
     actor!.role === "organizer",
     "Only organizer or admin can list own events",
   );
+
   return listEventsByOrganizer(actorId);
 };
 
-export const listParticipantsForEvent = (
+export const listParticipantsForEvent = async (
   actorId: string,
   eventId: string,
-): PublicUser[] => {
-  const actor = getUserById(actorId);
+): Promise<PublicUser[]> => {
+  const actor = await getUserById(actorId);
   assert(Boolean(actor), "Actor not found");
 
-  const event = getEventById(eventId);
+  const event = await getEventById(eventId);
   assert(Boolean(event), "Event not found");
 
   const isOwner = event!.organizerId === actorId;
   const isAdmin = actor!.role === "admin";
   assert(isOwner || isAdmin, "Only owner or admin can view participants");
 
-  return listEventParticipants(eventId) ?? [];
+  return (await listEventParticipants(eventId)) ?? [];
 };
 
-export const removeParticipantFromEvent = (
+export const removeParticipantFromEvent = async (
   actorId: string,
   eventId: string,
   participantId: string,
-): EventView => {
-  const actor = getUserById(actorId);
+): Promise<EventView> => {
+  const actor = await getUserById(actorId);
   assert(Boolean(actor), "Actor not found");
 
-  const event = getEventById(eventId);
+  const event = await getEventById(eventId);
   assert(Boolean(event), "Event not found");
 
   const isOwner = event!.organizerId === actorId;
   const isAdmin = actor!.role === "admin";
   assert(isOwner || isAdmin, "Only owner or admin can remove participants");
 
-  const result = removeParticipant(eventId, participantId);
+  const result = await removeParticipant(eventId, participantId);
   assert(result !== "not_found", "Event not found");
   assert(result !== "not_joined", "Participant not found in this event");
+
   if (typeof result === "string") {
     throw new Error("Unexpected participation state");
   }
@@ -279,52 +293,58 @@ export const removeParticipantFromEvent = (
   return result;
 };
 
-export const listUsersForAdmin = (adminId: string): PublicUser[] => {
-  const admin = getUserById(adminId);
+export const listUsersForAdmin = async (
+  adminId: string,
+): Promise<PublicUser[]> => {
+  const admin = await getUserById(adminId);
   assert(Boolean(admin), "Admin not found");
   assert(admin!.role === "admin", "Only admin can list users");
 
   return getPublicUsers();
 };
 
-export const changeUserRole = (
+export const changeUserRole = async (
   adminId: string,
   userId: string,
   role: UserRole,
-): PublicUser => {
-  const admin = getUserById(adminId);
+): Promise<PublicUser> => {
+  const admin = await getUserById(adminId);
   assert(Boolean(admin), "Admin not found");
   assert(admin!.role === "admin", "Only admin can change roles");
 
-  const updated = updateUser(userId, { role });
+  const updated = await updateUser(userId, { role });
   assert(Boolean(updated), "User not found");
+
   return updated!;
 };
 
-export const removeUserByAdmin = (adminId: string, userId: string): void => {
-  const admin = getUserById(adminId);
+export const removeUserByAdmin = async (
+  adminId: string,
+  userId: string,
+): Promise<void> => {
+  const admin = await getUserById(adminId);
   assert(Boolean(admin), "Admin not found");
   assert(admin!.role === "admin", "Only admin can delete users");
   assert(adminId !== userId, "Administrator cannot delete own account");
 
-  const deleted = deleteUser(userId);
+  const deleted = await deleteUser(userId);
   assert(deleted, "User not found");
 };
 
-export const moderateEventRemoval = (
+export const moderateEventRemoval = async (
   adminId: string,
   eventId: string,
   reason?: string,
-): { moderationId: string } => {
-  const admin = getUserById(adminId);
+): Promise<{ moderationId: string }> => {
+  const admin = await getUserById(adminId);
   assert(Boolean(admin), "Admin not found");
   assert(admin!.role === "admin", "Only admin can moderate content");
 
-  const event = getEventById(eventId);
+  const event = await getEventById(eventId);
   assert(Boolean(event), "Event not found");
 
-  deleteEvent(eventId);
-  const log = logModerationAction({
+  await deleteEvent(eventId);
+  const log = await logModerationAction({
     adminId,
     eventId,
     action: "remove_event",
