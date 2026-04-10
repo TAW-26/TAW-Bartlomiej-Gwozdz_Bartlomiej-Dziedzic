@@ -7,8 +7,8 @@ const user_service_1 = require("../modules/services/user.service");
 class ModerationController {
     // UC13: Usuwanie przez administratora z logowaniem powodu
     static async moderateRemoveEvent(req) {
-        (0, auth_middleware_1.authorize)(req.userId, ["admin"]);
-        (0, store_1.logModerationAction)({
+        await (0, auth_middleware_1.authorize)(req.userId, ["admin"]);
+        await (0, store_1.logModerationAction)({
             adminId: req.userId,
             eventId: req.eventId,
             reason: req.reason,
@@ -18,7 +18,7 @@ class ModerationController {
     }
     // UC12: Zarządzanie użytkownikami przez Admina
     static async listAllUsers(req) {
-        (0, auth_middleware_1.authorize)(req.userId, ["admin"]);
+        await (0, auth_middleware_1.authorize)(req.userId, ["admin"]);
         return user_service_1.UserService.getAll();
     }
 }
