@@ -1,68 +1,64 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.isOwnerOrAdmin = exports.authorize = exports.requireRoles = exports.authenticateJWT = exports.createAccessToken = void 0;
+const store_1 = require("../store");
 const jwt = require("jsonwebtoken");
-const { getUserById } = require("../store");
-
-// Klucz w env(.env)
-const JWT_SECRET = process.env.JWT_SECRET || "none";
-
-/**
- * Główny middleware do autentykacji JWT.
- * Wyciąga token z nagłówka Authorization, weryfikuje go i dołącza usera do req.
- */
-exports.authenticateJWT = (req, res, next) => {
+const getJwtSecret = () => process.env.JWT_SECRET ?? "dev-jwt-secret";
+const createAccessToken = (user) => jwt.sign({ ...user }, getJwtSecret(), { expiresIn: "8h" });
+exports.createAccessToken = createAccessToken;
+const authenticateJWT = (req, res, next) => {
     const authHeader = req.headers.authorization;
-
-    if (authHeader) {
-        // Format "Bearer <token>"
-        const token = authHeader.split(' ')[1];
-
-        jwt.verify(token, JWT_SECRET, (err, userPayload) => {
-            if (err) {
-                return res.status(403).json({ error: "Token jest nieważny lub wygasł" });
-            }
-
-            // Dołączamy dane z tokena do obiektu request
-            req.user = userPayload;
-            next();
-        });
-    } else {
-        res.status(401).json({ error: "Brak tokena autoryzacyjnego" });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res
+            .status(401)
+            .json({ error: "Brak lub niepoprawny naglowek Authorization" });
+        return;
+    }
+    const token = authHeader.slice("Bearer ".length).trim();
+    if (!token) {
+        res.status(401).json({ error: "Brak tokena" });
+        return;
+    }
+    try {
+        req.user = jwt.verify(token, getJwtSecret());
+        next();
+    }
+    catch {
+        res.status(401).json({ error: "Token jest niewazny lub wygasl" });
     }
 };
-
-/**
- * Middleware sprawdzający uprawnienia
- */
-exports.authorize = (allowedRoles) => {
+exports.authenticateJWT = authenticateJWT;
+const requireRoles = (allowedRoles) => {
     return (req, res, next) => {
         if (!req.user) {
-            return res.status(401).json({ error: "Użytkownik niezalogowany" });
+            res.status(401).json({ error: "Uzytkownik niezalogowany" });
+            return;
         }
-
         if (!allowedRoles.includes(req.user.role)) {
-            return res.status(403).json({ error: "Brak uprawnień do wykonania tej akcji" });
+            res.status(403).json({ error: "Brak uprawnien" });
+            return;
         }
-
         next();
     };
 };
-
-/**
- * Middleware sprawdzający czy użytkownik jest właścicielem zasobu lub adminem
- */
-exports.isOwnerOrAdmin = async (req, res, next) => {
-    const user = req.user;
-    const resourceOrganizerId = req.params.organizerId || req.body.organizerId;
-
-    if (!user) return res.status(401).json({ error: "Brak autoryzacji" });
-
-    if (user.role === "admin") {
-        return next();
+exports.requireRoles = requireRoles;
+// Legacy helpers kept for compatibility with controller classes.
+const authorize = async (actorId, allowedRoles) => {
+    const user = await (0, store_1.getUserById)(actorId);
+    if (!user)
+        throw new Error("Uzytkownik nie istnieje");
+    if (!allowedRoles.includes(user.role)) {
+        throw new Error("Brak uprawnien do wykonania tej akcji");
     }
-
-    if (user.id === resourceOrganizerId) {
-        return next();
-    }
-
-    return res.status(403).json({ error: "Brak uprawnień - nie jesteś właścicielem" });
+    return user;
 };
+exports.authorize = authorize;
+const isOwnerOrAdmin = async (actorId, resourceOrganizerId) => {
+    const user = await (0, store_1.getUserById)(actorId);
+    if (user?.role === "admin")
+        return true;
+    if (actorId === resourceOrganizerId)
+        return true;
+    throw new Error("Brak uprawnien");
+};
+exports.isOwnerOrAdmin = isOwnerOrAdmin;

@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { getUserById } from "../store";
 import { UserRole } from "../types";
 
 const jwt = require("jsonwebtoken") as {
@@ -74,4 +75,25 @@ export const requireRoles = (allowedRoles: UserRole[]) => {
 
     next();
   };
+};
+
+// Legacy helpers kept for compatibility with controller classes.
+export const authorize = async (actorId: string, allowedRoles: UserRole[]) => {
+  const user = await getUserById(actorId);
+  if (!user) throw new Error("Uzytkownik nie istnieje");
+
+  if (!allowedRoles.includes(user.role)) {
+    throw new Error("Brak uprawnien do wykonania tej akcji");
+  }
+  return user;
+};
+
+export const isOwnerOrAdmin = async (
+  actorId: string,
+  resourceOrganizerId: string,
+) => {
+  const user = await getUserById(actorId);
+  if (user?.role === "admin") return true;
+  if (actorId === resourceOrganizerId) return true;
+  throw new Error("Brak uprawnien");
 };

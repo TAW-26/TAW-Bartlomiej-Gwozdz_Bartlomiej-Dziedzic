@@ -12,7 +12,7 @@ class ModerationController {
             adminId: req.userId,
             eventId: req.eventId,
             reason: req.reason,
-            action: "remove_event"
+            action: "remove_event",
         });
         return (0, store_1.deleteEvent)(req.eventId);
     }
