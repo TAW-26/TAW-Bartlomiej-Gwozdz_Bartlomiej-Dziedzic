@@ -22,6 +22,7 @@ const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const path_1 = __importDefault(require("path"));
 const businessLogic_1 = require("./businessLogic");
+const auth_middleware_1 = require("./middlewares/auth.middleware");
 const store_1 = require("./store");
 const app = (0, express_1.default)();
 const PORT = 3000;
@@ -47,6 +48,9 @@ const loadLocalSecrets = () => {
         }
         if (parsed.mongodbAppName && process.env.MONGODB_APP_NAME === undefined) {
             process.env.MONGODB_APP_NAME = parsed.mongodbAppName;
+        }
+        if (parsed.jwtSecret && process.env.JWT_SECRET === undefined) {
+            process.env.JWT_SECRET = parsed.jwtSecret;
         }
     }
     catch {
@@ -106,15 +110,10 @@ app.get("/api/events/:id", async (req, res) => {
     }
 });
 // POST /api/events - tworzenie wydarzenia
-app.post("/api/events", async (req, res) => {
+app.post("/api/events", auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRoles)(["organizer", "admin"]), async (req, res) => {
     try {
-        const { organizerId, ...eventInput } = req.body;
-        if (!organizerId || typeof organizerId !== "string") {
-            return res
-                .status(400)
-                .json({ error: "organizerId is required in request body" });
-        }
-        const created = await (0, businessLogic_1.createOrganizerEvent)(organizerId, eventInput);
+        const eventInput = req.body;
+        const created = await (0, businessLogic_1.createOrganizerEvent)(req.user.id, eventInput);
         return res.status(201).json(created);
     }
     catch (error) {
@@ -124,15 +123,10 @@ app.post("/api/events", async (req, res) => {
     }
 });
 // PUT /api/events/:id - edycja wydarzenia
-app.put("/api/events/:id", async (req, res) => {
+app.put("/api/events/:id", auth_middleware_1.authenticateJWT, async (req, res) => {
     try {
-        const { actorId, ...patch } = req.body;
-        if (!actorId || typeof actorId !== "string") {
-            return res
-                .status(400)
-                .json({ error: "actorId is required in request body" });
-        }
-        const updated = await (0, businessLogic_1.editOrganizerEvent)(actorId, req.params.id, patch);
+        const patch = req.body;
+        const updated = await (0, businessLogic_1.editOrganizerEvent)(req.user.id, req.params.id, patch);
         return res.json(updated);
     }
     catch (error) {
@@ -142,13 +136,9 @@ app.put("/api/events/:id", async (req, res) => {
     }
 });
 // DELETE /api/events/:id - usuniecie wydarzenia
-app.delete("/api/events/:id", async (req, res) => {
+app.delete("/api/events/:id", auth_middleware_1.authenticateJWT, async (req, res) => {
     try {
-        const actorId = req.query.actorId;
-        if (!actorId || typeof actorId !== "string") {
-            return res.status(400).json({ error: "actorId query param is required" });
-        }
-        await (0, businessLogic_1.removeEvent)(actorId, req.params.id);
+        await (0, businessLogic_1.removeEvent)(req.user.id, req.params.id);
         return res.status(204).send();
     }
     catch (error) {
@@ -158,13 +148,9 @@ app.delete("/api/events/:id", async (req, res) => {
     }
 });
 // GET /api/events/:id/participants - lista uczestnikow (tylko dla organizatora/admina)
-app.get("/api/events/:id/participants", async (req, res) => {
+app.get("/api/events/:id/participants", auth_middleware_1.authenticateJWT, async (req, res) => {
     try {
-        const actorId = req.query.actorId;
-        if (!actorId || typeof actorId !== "string") {
-            return res.status(400).json({ error: "actorId query param is required" });
-        }
-        const participants = await (0, businessLogic_1.listParticipantsForEvent)(actorId, req.params.id);
+        const participants = await (0, businessLogic_1.listParticipantsForEvent)(req.user.id, req.params.id);
         return res.json(participants);
     }
     catch (error) {
@@ -174,15 +160,9 @@ app.get("/api/events/:id/participants", async (req, res) => {
     }
 });
 // POST /api/events/:id/join - dolaczenie do wydarzenia
-app.post("/api/events/:id/join", async (req, res) => {
+app.post("/api/events/:id/join", auth_middleware_1.authenticateJWT, async (req, res) => {
     try {
-        const userId = req.body.userId;
-        if (!userId || typeof userId !== "string") {
-            return res
-                .status(400)
-                .json({ error: "userId is required in request body" });
-        }
-        const result = await (0, businessLogic_1.confirmParticipation)(req.params.id, userId);
+        const result = await (0, businessLogic_1.confirmParticipation)(req.params.id, req.user.id);
         return res.status(201).json(result);
     }
     catch (error) {
@@ -192,15 +172,9 @@ app.post("/api/events/:id/join", async (req, res) => {
     }
 });
 // POST /api/events/:id/leave - rezygnacja z wydarzenia
-app.post("/api/events/:id/leave", async (req, res) => {
+app.post("/api/events/:id/leave", auth_middleware_1.authenticateJWT, async (req, res) => {
     try {
-        const userId = req.body.userId;
-        if (!userId || typeof userId !== "string") {
-            return res
-                .status(400)
-                .json({ error: "userId is required in request body" });
-        }
-        const result = await (0, businessLogic_1.cancelParticipation)(req.params.id, userId);
+        const result = await (0, businessLogic_1.cancelParticipation)(req.params.id, req.user.id);
         return res.json(result);
     }
     catch (error) {
@@ -210,13 +184,9 @@ app.post("/api/events/:id/leave", async (req, res) => {
     }
 });
 // GET /api/events/organizer/my-events - lista wlasnych eventow organizatora
-app.get("/api/events/organizer/my-events", async (req, res) => {
+app.get("/api/events/organizer/my-events", auth_middleware_1.authenticateJWT, async (req, res) => {
     try {
-        const actorId = req.query.actorId;
-        if (!actorId || typeof actorId !== "string") {
-            return res.status(400).json({ error: "actorId query param is required" });
-        }
-        const events = await (0, businessLogic_1.listOrganizerEvents)(actorId);
+        const events = await (0, businessLogic_1.listOrganizerEvents)(req.user.id);
         return res.json(events);
     }
     catch (error) {
@@ -226,15 +196,9 @@ app.get("/api/events/organizer/my-events", async (req, res) => {
     }
 });
 // DELETE /api/events/:id/participants/:userId - usuniecie uczestnika z wydarzenia
-app.delete("/api/events/:id/participants/:userId", async (req, res) => {
+app.delete("/api/events/:id/participants/:userId", auth_middleware_1.authenticateJWT, async (req, res) => {
     try {
-        const actorId = req.query.actorId;
-        if (!actorId || typeof actorId !== "string") {
-            return res
-                .status(400)
-                .json({ error: "actorId query param is required" });
-        }
-        const result = await (0, businessLogic_1.removeParticipantFromEvent)(actorId, req.params.id, req.params.userId);
+        const result = await (0, businessLogic_1.removeParticipantFromEvent)(req.user.id, req.params.id, req.params.userId);
         return res.json(result);
     }
     catch (error) {
@@ -268,7 +232,12 @@ app.post("/api/users/login", async (req, res) => {
             email: req.body.email,
             password: req.body.password,
         });
-        return res.json(user);
+        const token = (0, auth_middleware_1.createAccessToken)({
+            id: user.id,
+            role: user.role,
+            email: user.email,
+        });
+        return res.json({ user, token });
     }
     catch (error) {
         return res.status(401).json({
@@ -277,13 +246,9 @@ app.post("/api/users/login", async (req, res) => {
     }
 });
 // GET /api/users - lista wszystkich uzytkownikow (tylko admin)
-app.get("/api/users", async (req, res) => {
+app.get("/api/users", auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRoles)(["admin"]), async (req, res) => {
     try {
-        const adminId = req.query.adminId;
-        if (!adminId || typeof adminId !== "string") {
-            return res.status(400).json({ error: "adminId query param is required" });
-        }
-        const users = await (0, businessLogic_1.listUsersForAdmin)(adminId);
+        const users = await (0, businessLogic_1.listUsersForAdmin)(req.user.id);
         return res.json(users);
     }
     catch (error) {
@@ -293,21 +258,15 @@ app.get("/api/users", async (req, res) => {
     }
 });
 // PUT /api/users/:id/role - zmiana roli uzytkownika (tylko admin)
-app.put("/api/users/:id/role", async (req, res) => {
+app.put("/api/users/:id/role", auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRoles)(["admin"]), async (req, res) => {
     try {
-        const adminId = req.body.adminId;
         const newRole = req.body.role;
-        if (!adminId || typeof adminId !== "string") {
-            return res
-                .status(400)
-                .json({ error: "adminId is required in request body" });
-        }
         if (!newRole || typeof newRole !== "string") {
             return res
                 .status(400)
                 .json({ error: "role is required in request body" });
         }
-        const updated = await (0, businessLogic_1.changeUserRole)(adminId, req.params.id, newRole);
+        const updated = await (0, businessLogic_1.changeUserRole)(req.user.id, req.params.id, newRole);
         return res.json(updated);
     }
     catch (error) {
@@ -317,13 +276,9 @@ app.put("/api/users/:id/role", async (req, res) => {
     }
 });
 // DELETE /api/users/:id - usuniecie uzytkownika (tylko admin)
-app.delete("/api/users/:id", async (req, res) => {
+app.delete("/api/users/:id", auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRoles)(["admin"]), async (req, res) => {
     try {
-        const adminId = req.query.adminId;
-        if (!adminId || typeof adminId !== "string") {
-            return res.status(400).json({ error: "adminId query param is required" });
-        }
-        await (0, businessLogic_1.removeUserByAdmin)(adminId, req.params.id);
+        await (0, businessLogic_1.removeUserByAdmin)(req.user.id, req.params.id);
         return res.status(204).send();
     }
     catch (error) {
@@ -334,22 +289,16 @@ app.delete("/api/users/:id", async (req, res) => {
 });
 // ========== MODERATION ENDPOINTS ==========
 // POST /api/moderation/remove-event - moderacja usuniecia wydarzenia przez admina
-app.post("/api/moderation/remove-event", async (req, res) => {
+app.post("/api/moderation/remove-event", auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRoles)(["admin"]), async (req, res) => {
     try {
-        const adminId = req.body.adminId;
         const eventId = req.body.eventId;
         const reason = req.body.reason;
-        if (!adminId || typeof adminId !== "string") {
-            return res
-                .status(400)
-                .json({ error: "adminId is required in request body" });
-        }
         if (!eventId || typeof eventId !== "string") {
             return res
                 .status(400)
                 .json({ error: "eventId is required in request body" });
         }
-        const result = await (0, businessLogic_1.moderateEventRemoval)(adminId, eventId, reason);
+        const result = await (0, businessLogic_1.moderateEventRemoval)(req.user.id, eventId, reason);
         return res.status(201).json(result);
     }
     catch (error) {
