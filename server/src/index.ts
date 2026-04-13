@@ -20,6 +20,12 @@ import {
   removeParticipantFromEvent,
   moderateEventRemoval,
 } from "./businessLogic";
+import {
+  authenticateJWT,
+  AuthenticatedRequest,
+  createAccessToken,
+  requireRoles,
+} from "./middlewares/auth.middleware";
 import { ensureAdminSeed } from "./store";
 
 const app = express();
@@ -31,6 +37,7 @@ interface LocalSecrets {
   mongodbCluster?: string;
   mongodbAppName?: string;
   mongodbUri?: string;
+  jwtSecret?: string;
 }
 
 const loadLocalSecrets = (): void => {
@@ -62,6 +69,10 @@ const loadLocalSecrets = (): void => {
 
     if (parsed.mongodbAppName && process.env.MONGODB_APP_NAME === undefined) {
       process.env.MONGODB_APP_NAME = parsed.mongodbAppName;
+    }
+
+    if (parsed.jwtSecret && process.env.JWT_SECRET === undefined) {
+      process.env.JWT_SECRET = parsed.jwtSecret;
     }
   } catch {
     console.warn("Cannot parse server/secrets.json. Falling back to env vars.");
@@ -133,145 +144,125 @@ app.get("/api/events/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/events - tworzenie wydarzenia
-app.post("/api/events", async (req: Request, res: Response) => {
-  try {
-    const { organizerId, ...eventInput } = req.body as {
-      organizerId?: string;
-      [key: string]: unknown;
-    };
-
-    if (!organizerId || typeof organizerId !== "string") {
-      return res
-        .status(400)
-        .json({ error: "organizerId is required in request body" });
+app.post(
+  "/api/events",
+  authenticateJWT,
+  requireRoles(["organizer", "admin"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const eventInput = req.body as Record<string, unknown>;
+      const created = await createOrganizerEvent(
+        req.user!.id,
+        eventInput as any,
+      );
+      return res.status(201).json(created);
+    } catch (error) {
+      return res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to create event",
+      });
     }
-
-    const created = await createOrganizerEvent(organizerId, eventInput as any);
-    return res.status(201).json(created);
-  } catch (error) {
-    return res.status(400).json({
-      error: error instanceof Error ? error.message : "Failed to create event",
-    });
-  }
-});
+  },
+);
 
 // PUT /api/events/:id - edycja wydarzenia
-app.put("/api/events/:id", async (req: Request, res: Response) => {
-  try {
-    const { actorId, ...patch } = req.body as {
-      actorId?: string;
-      [key: string]: unknown;
-    };
+app.put(
+  "/api/events/:id",
+  authenticateJWT,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const patch = req.body as Record<string, unknown>;
 
-    if (!actorId || typeof actorId !== "string") {
-      return res
-        .status(400)
-        .json({ error: "actorId is required in request body" });
+      const updated = await editOrganizerEvent(
+        req.user!.id,
+        req.params.id,
+        patch as any,
+      );
+      return res.json(updated);
+    } catch (error) {
+      return res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to update event",
+      });
     }
-
-    const updated = await editOrganizerEvent(
-      actorId,
-      req.params.id,
-      patch as any,
-    );
-    return res.json(updated);
-  } catch (error) {
-    return res.status(400).json({
-      error: error instanceof Error ? error.message : "Failed to update event",
-    });
-  }
-});
+  },
+);
 
 // DELETE /api/events/:id - usuniecie wydarzenia
-app.delete("/api/events/:id", async (req: Request, res: Response) => {
-  try {
-    const actorId = req.query.actorId;
-
-    if (!actorId || typeof actorId !== "string") {
-      return res.status(400).json({ error: "actorId query param is required" });
+app.delete(
+  "/api/events/:id",
+  authenticateJWT,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      await removeEvent(req.user!.id, req.params.id);
+      return res.status(204).send();
+    } catch (error) {
+      return res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to delete event",
+      });
     }
-
-    await removeEvent(actorId, req.params.id);
-    return res.status(204).send();
-  } catch (error) {
-    return res.status(400).json({
-      error: error instanceof Error ? error.message : "Failed to delete event",
-    });
-  }
-});
+  },
+);
 
 // GET /api/events/:id/participants - lista uczestnikow (tylko dla organizatora/admina)
-app.get("/api/events/:id/participants", async (req: Request, res: Response) => {
-  try {
-    const actorId = req.query.actorId;
-
-    if (!actorId || typeof actorId !== "string") {
-      return res.status(400).json({ error: "actorId query param is required" });
+app.get(
+  "/api/events/:id/participants",
+  authenticateJWT,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const participants = await listParticipantsForEvent(
+        req.user!.id,
+        req.params.id,
+      );
+      return res.json(participants);
+    } catch (error) {
+      return res.status(403).json({
+        error: error instanceof Error ? error.message : "Access denied",
+      });
     }
-
-    const participants = await listParticipantsForEvent(actorId, req.params.id);
-    return res.json(participants);
-  } catch (error) {
-    return res.status(403).json({
-      error: error instanceof Error ? error.message : "Access denied",
-    });
-  }
-});
+  },
+);
 
 // POST /api/events/:id/join - dolaczenie do wydarzenia
-app.post("/api/events/:id/join", async (req: Request, res: Response) => {
-  try {
-    const userId = req.body.userId;
-
-    if (!userId || typeof userId !== "string") {
-      return res
-        .status(400)
-        .json({ error: "userId is required in request body" });
+app.post(
+  "/api/events/:id/join",
+  authenticateJWT,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const result = await confirmParticipation(req.params.id, req.user!.id);
+      return res.status(201).json(result);
+    } catch (error) {
+      return res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to join event",
+      });
     }
-
-    const result = await confirmParticipation(req.params.id, userId);
-    return res.status(201).json(result);
-  } catch (error) {
-    return res.status(400).json({
-      error: error instanceof Error ? error.message : "Failed to join event",
-    });
-  }
-});
+  },
+);
 
 // POST /api/events/:id/leave - rezygnacja z wydarzenia
-app.post("/api/events/:id/leave", async (req: Request, res: Response) => {
-  try {
-    const userId = req.body.userId;
-
-    if (!userId || typeof userId !== "string") {
-      return res
-        .status(400)
-        .json({ error: "userId is required in request body" });
+app.post(
+  "/api/events/:id/leave",
+  authenticateJWT,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const result = await cancelParticipation(req.params.id, req.user!.id);
+      return res.json(result);
+    } catch (error) {
+      return res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to leave event",
+      });
     }
-
-    const result = await cancelParticipation(req.params.id, userId);
-    return res.json(result);
-  } catch (error) {
-    return res.status(400).json({
-      error: error instanceof Error ? error.message : "Failed to leave event",
-    });
-  }
-});
+  },
+);
 
 // GET /api/events/organizer/my-events - lista wlasnych eventow organizatora
 app.get(
   "/api/events/organizer/my-events",
-  async (req: Request, res: Response) => {
+  authenticateJWT,
+  async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const actorId = req.query.actorId;
-
-      if (!actorId || typeof actorId !== "string") {
-        return res
-          .status(400)
-          .json({ error: "actorId query param is required" });
-      }
-
-      const events = await listOrganizerEvents(actorId);
+      const events = await listOrganizerEvents(req.user!.id);
       return res.json(events);
     } catch (error) {
       return res.status(403).json({
@@ -284,18 +275,11 @@ app.get(
 // DELETE /api/events/:id/participants/:userId - usuniecie uczestnika z wydarzenia
 app.delete(
   "/api/events/:id/participants/:userId",
-  async (req: Request, res: Response) => {
+  authenticateJWT,
+  async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const actorId = req.query.actorId;
-
-      if (!actorId || typeof actorId !== "string") {
-        return res
-          .status(400)
-          .json({ error: "actorId query param is required" });
-      }
-
       const result = await removeParticipantFromEvent(
-        actorId,
+        req.user!.id,
         req.params.id,
         req.params.userId,
       );
@@ -336,7 +320,13 @@ app.post("/api/users/login", async (req: Request, res: Response) => {
       password: req.body.password,
     });
 
-    return res.json(user);
+    const token = createAccessToken({
+      id: user.id,
+      role: user.role,
+      email: user.email,
+    });
+
+    return res.json({ user, token });
   } catch (error) {
     return res.status(401).json({
       error: error instanceof Error ? error.message : "Invalid credentials",
@@ -345,88 +335,79 @@ app.post("/api/users/login", async (req: Request, res: Response) => {
 });
 
 // GET /api/users - lista wszystkich uzytkownikow (tylko admin)
-app.get("/api/users", async (req: Request, res: Response) => {
-  try {
-    const adminId = req.query.adminId;
-
-    if (!adminId || typeof adminId !== "string") {
-      return res.status(400).json({ error: "adminId query param is required" });
+app.get(
+  "/api/users",
+  authenticateJWT,
+  requireRoles(["admin"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const users = await listUsersForAdmin(req.user!.id);
+      return res.json(users);
+    } catch (error) {
+      return res.status(403).json({
+        error: error instanceof Error ? error.message : "Access denied",
+      });
     }
-
-    const users = await listUsersForAdmin(adminId);
-    return res.json(users);
-  } catch (error) {
-    return res.status(403).json({
-      error: error instanceof Error ? error.message : "Access denied",
-    });
-  }
-});
+  },
+);
 
 // PUT /api/users/:id/role - zmiana roli uzytkownika (tylko admin)
-app.put("/api/users/:id/role", async (req: Request, res: Response) => {
-  try {
-    const adminId = req.body.adminId;
-    const newRole = req.body.role;
+app.put(
+  "/api/users/:id/role",
+  authenticateJWT,
+  requireRoles(["admin"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const newRole = req.body.role;
 
-    if (!adminId || typeof adminId !== "string") {
-      return res
-        .status(400)
-        .json({ error: "adminId is required in request body" });
+      if (!newRole || typeof newRole !== "string") {
+        return res
+          .status(400)
+          .json({ error: "role is required in request body" });
+      }
+
+      const updated = await changeUserRole(
+        req.user!.id,
+        req.params.id,
+        newRole as any,
+      );
+      return res.json(updated);
+    } catch (error) {
+      return res.status(403).json({
+        error: error instanceof Error ? error.message : "Failed to update role",
+      });
     }
-
-    if (!newRole || typeof newRole !== "string") {
-      return res
-        .status(400)
-        .json({ error: "role is required in request body" });
-    }
-
-    const updated = await changeUserRole(
-      adminId,
-      req.params.id,
-      newRole as any,
-    );
-    return res.json(updated);
-  } catch (error) {
-    return res.status(403).json({
-      error: error instanceof Error ? error.message : "Failed to update role",
-    });
-  }
-});
+  },
+);
 
 // DELETE /api/users/:id - usuniecie uzytkownika (tylko admin)
-app.delete("/api/users/:id", async (req: Request, res: Response) => {
-  try {
-    const adminId = req.query.adminId;
-
-    if (!adminId || typeof adminId !== "string") {
-      return res.status(400).json({ error: "adminId query param is required" });
+app.delete(
+  "/api/users/:id",
+  authenticateJWT,
+  requireRoles(["admin"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      await removeUserByAdmin(req.user!.id, req.params.id);
+      return res.status(204).send();
+    } catch (error) {
+      return res.status(403).json({
+        error: error instanceof Error ? error.message : "Failed to delete user",
+      });
     }
-
-    await removeUserByAdmin(adminId, req.params.id);
-    return res.status(204).send();
-  } catch (error) {
-    return res.status(403).json({
-      error: error instanceof Error ? error.message : "Failed to delete user",
-    });
-  }
-});
+  },
+);
 
 // ========== MODERATION ENDPOINTS ==========
 
 // POST /api/moderation/remove-event - moderacja usuniecia wydarzenia przez admina
 app.post(
   "/api/moderation/remove-event",
-  async (req: Request, res: Response) => {
+  authenticateJWT,
+  requireRoles(["admin"]),
+  async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const adminId = req.body.adminId;
       const eventId = req.body.eventId;
       const reason = req.body.reason;
-
-      if (!adminId || typeof adminId !== "string") {
-        return res
-          .status(400)
-          .json({ error: "adminId is required in request body" });
-      }
 
       if (!eventId || typeof eventId !== "string") {
         return res
@@ -434,7 +415,7 @@ app.post(
           .json({ error: "eventId is required in request body" });
       }
 
-      const result = await moderateEventRemoval(adminId, eventId, reason);
+      const result = await moderateEventRemoval(req.user!.id, eventId, reason);
       return res.status(201).json(result);
     } catch (error) {
       return res.status(403).json({

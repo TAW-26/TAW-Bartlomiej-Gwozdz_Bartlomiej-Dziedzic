@@ -128,7 +128,9 @@ const createUser = async (input) => {
 };
 exports.createUser = createUser;
 const getUserByEmail = async (email) => {
-    const user = await UserModel.findOne({ email: email.toLowerCase().trim() }).exec();
+    const user = await UserModel.findOne({
+        email: email.toLowerCase().trim(),
+    }).exec();
     return user ? mapUserDocument(user) : undefined;
 };
 exports.getUserByEmail = getUserByEmail;
@@ -240,7 +242,9 @@ const updateEvent = async (id, patch) => {
         ...(patch.description !== undefined
             ? { description: patch.description }
             : {}),
-        ...(patch.startsAt !== undefined ? { startsAt: new Date(patch.startsAt) } : {}),
+        ...(patch.startsAt !== undefined
+            ? { startsAt: new Date(patch.startsAt) }
+            : {}),
         ...(patch.endsAt !== undefined ? { endsAt: new Date(patch.endsAt) } : {}),
         ...(patch.location !== undefined ? { location: patch.location } : {}),
         ...(patch.city !== undefined ? { city: patch.city } : {}),
@@ -270,7 +274,8 @@ const addParticipant = async (eventId, userId) => {
     if (event.participants.includes(userId)) {
         return "already_joined";
     }
-    if (event.maxParticipants && event.participants.length >= event.maxParticipants) {
+    if (event.maxParticipants &&
+        event.participants.length >= event.maxParticipants) {
         return "full";
     }
     event.participants.push(userId);
@@ -296,7 +301,9 @@ const listEventParticipants = async (eventId) => {
     if (!event) {
         return undefined;
     }
-    const users = await UserModel.find({ _id: { $in: event.participants } }).exec();
+    const users = await UserModel.find({
+        _id: { $in: event.participants },
+    }).exec();
     return users.map((user) => sanitizeUser(mapUserDocument(user)));
 };
 exports.listEventParticipants = listEventParticipants;
