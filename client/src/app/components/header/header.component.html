@@ -1,0 +1,32 @@
+<header class="app-header">
+  <h1>Aplikacja do obsługi wydarzeń lokalnych</h1>
+
+  <nav class="header-nav" aria-label="Nawigacja główna">
+    <a
+      routerLink="/"
+      [routerLinkActiveOptions]="{ exact: true }"
+      routerLinkActive="is-active"
+      class="nav-link"
+    >
+      Strona Główna
+    </a>
+
+    <a
+      routerLink="/events"
+      [routerLinkActiveOptions]="{ exact: true }"
+      routerLinkActive="is-active"
+      class="nav-link"
+    >
+      Lista Wydarzeń
+    </a>
+
+    <a
+      routerLink="/user"
+      [routerLinkActiveOptions]="{ exact: true }"
+      routerLinkActive="is-active"
+      class="nav-link"
+    >
+      Panel Użytkownika
+    </a>
+  </nav>
+</header>
