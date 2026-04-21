@@ -1,0 +1,110 @@
+:host {
+  display: block;
+}
+
+.resource-card {
+  background: #1b4277;
+  padding: 14px 14px 10px;
+  display: grid;
+  grid-template-columns: 225px 1fr;
+  grid-template-areas:
+    'thumb content'
+    'desc desc';
+  column-gap: 16px;
+  row-gap: 8px;
+  align-items: start;
+}
+
+.resource-thumb {
+  grid-area: thumb;
+  width: 225px;
+  height: 168px;
+  background: #f5f1e5;
+  border: 6px solid #5f5b56;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28);
+}
+
+.resource-frame {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.05) 50%, rgba(255, 255, 255, 0.12) 50%);
+}
+
+.resource-sun {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #eab64f;
+  top: 42px;
+  left: 40px;
+}
+
+.resource-peak {
+  position: absolute;
+  bottom: 0;
+  background: #5aaeb3;
+}
+
+.resource-peak-left {
+  width: 92px;
+  height: 64px;
+  left: 14px;
+  clip-path: polygon(0 100%, 50% 25%, 100% 100%);
+}
+
+.resource-peak-right {
+  width: 112px;
+  height: 82px;
+  right: 14px;
+  clip-path: polygon(0 100%, 50% 16%, 100% 100%);
+  background: #3c888f;
+}
+
+.resource-content {
+  grid-area: content;
+  padding-top: 4px;
+}
+
+.resource-content h3 {
+  margin: 0 0 8px;
+  font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+  font-size: clamp(32px, 2.8vw, 52px);
+  line-height: 1.05;
+  color: #f6f8fc;
+  font-weight: 400;
+}
+
+.resource-content p {
+  margin: 0 0 2px;
+  font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+  font-size: clamp(14px, 1.1vw, 22px);
+  color: #f0f4fb;
+}
+
+.resource-description {
+  grid-area: desc;
+  margin: 4px 0 0;
+  font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+  font-size: clamp(11px, 0.95vw, 16px);
+  color: rgba(240, 244, 251, 0.85);
+}
+
+@media (max-width: 700px) {
+  .resource-card {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'thumb'
+      'content'
+      'desc';
+  }
+
+  .resource-thumb {
+    width: 100%;
+    max-width: 225px;
+    margin-bottom: 4px;
+  }
+}
