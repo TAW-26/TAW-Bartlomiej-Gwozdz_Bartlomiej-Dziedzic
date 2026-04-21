@@ -1,17 +1,7 @@
 import { Component } from '@angular/core';
 import { ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
 import { ResourceCardComponent } from '../../components/resource-card/resource-card.component';
-
-type ResourceItem = {
-  title: string;
-  categories: string;
-  city: string;
-  location: string;
-  startAt: string;
-  endAt: string;
-  status: string;
-  description: string;
-};
+import { EVENTS, EventItem } from '../../shared/event-data';
 
 type EventSearchFilters = {
   q: FormControl<string>;
@@ -39,41 +29,7 @@ export class EventsComponent {
     status: new FormControl('', { nonNullable: true }),
   });
 
-  protected readonly resources: ResourceItem[] = [
-    {
-      title: 'NAME',
-      categories: 'Category1, category2',
-      city: 'city',
-      location: 'location',
-      startAt: 'start at:',
-      endAt: 'end at:',
-      status: 'status:',
-      description:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas consequat ut orci non mattis...',
-    },
-    {
-      title: 'NAME',
-      categories: 'Category1, category2',
-      city: 'city',
-      location: 'location',
-      startAt: 'start at:',
-      endAt: 'end at:',
-      status: 'status:',
-      description:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas consequat ut orci non mattis...',
-    },
-    {
-      title: 'NAME',
-      categories: 'Category1, category2',
-      city: 'city',
-      location: 'location',
-      startAt: 'start at:',
-      endAt: 'end at:',
-      status: 'status:',
-      description:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas consequat ut orci non mattis...',
-    },
-  ];
+  protected readonly resources: EventItem[] = EVENTS;
 
   protected submitSearch(): void {
     const filters = this.filters.getRawValue();

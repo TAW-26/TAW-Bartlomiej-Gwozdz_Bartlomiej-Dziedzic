@@ -1,22 +1,14 @@
 import { Component, Input } from '@angular/core';
-
-export type ResourceItem = {
-  title: string;
-  categories: string;
-  city: string;
-  location: string;
-  startAt: string;
-  endAt: string;
-  status: string;
-  description: string;
-};
+import { RouterLink } from '@angular/router';
+import { EventItem } from '../../shared/event-data';
 
 @Component({
   selector: 'app-resource-card',
   standalone: true,
+  imports: [RouterLink],
   templateUrl: './resource-card.component.html',
   styleUrl: './resource-card.component.scss',
 })
 export class ResourceCardComponent {
-  @Input({ required: true }) resource!: ResourceItem;
+  @Input({ required: true }) resource!: EventItem;
 }

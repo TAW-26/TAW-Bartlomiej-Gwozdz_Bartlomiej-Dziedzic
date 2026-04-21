@@ -3,9 +3,9 @@
 }
 
 .resource-card {
+  display: grid;
   background: #1b4277;
   padding: 14px 14px 10px;
-  display: grid;
   grid-template-columns: 225px 1fr;
   grid-template-areas:
     'thumb content'
@@ -13,6 +13,8 @@
   column-gap: 16px;
   row-gap: 8px;
   align-items: start;
+  text-decoration: none;
+  color: inherit;
 }
 
 .resource-thumb {

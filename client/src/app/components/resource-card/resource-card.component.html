@@ -1,4 +1,8 @@
-<article class="resource-card">
+<a
+  class="resource-card"
+  [routerLink]="['/events', resource.id]"
+  aria-label="Otwórz szczegóły wydarzenia"
+>
   <div class="resource-thumb" aria-hidden="true">
     <div class="resource-frame"></div>
     <span class="resource-sun"></span>
@@ -17,4 +21,4 @@
   </div>
 
   <p class="resource-description">{{ resource.description }}</p>
-</article>
+</a>
