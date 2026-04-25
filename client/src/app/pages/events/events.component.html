@@ -1,0 +1,52 @@
+<main class="events-wrap">
+  <section class="events-panel">
+    <form
+      class="search-form"
+      [formGroup]="filters"
+      (ngSubmit)="submitSearch()"
+      aria-label="Wyszukiwanie wydarzeń"
+    >
+      <label class="search-field search-field--wide">
+        <span>Szukaj</span>
+        <input type="text" formControlName="q" placeholder="Nazwa, opis, organizator..." />
+      </label>
+
+      <label class="search-field">
+        <span>Miasto</span>
+        <input type="text" formControlName="city" placeholder="Np. Krakow" />
+      </label>
+
+      <label class="search-field">
+        <span>Kategoria</span>
+        <input type="text" formControlName="category" placeholder="Np. Edukacja" />
+      </label>
+
+      <label class="search-field">
+        <span>Od</span>
+        <input type="date" formControlName="from" />
+      </label>
+
+      <label class="search-field">
+        <span>Do</span>
+        <input type="date" formControlName="to" />
+      </label>
+
+      <label class="search-field">
+        <span>Status</span>
+        <select formControlName="status">
+          <option value="">Wszystkie</option>
+          <option value="open">open</option>
+          <option value="closed">closed</option>
+        </select>
+      </label>
+
+      <button class="search-submit" type="submit">Filtruj</button>
+    </form>
+
+    <div class="events-list">
+      @for (resource of resources; track resource.title + resource.description) {
+        <app-resource-card [resource]="resource"></app-resource-card>
+      }
+    </div>
+  </section>
+</main>

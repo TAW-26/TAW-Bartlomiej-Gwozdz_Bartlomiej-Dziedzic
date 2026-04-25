@@ -1,0 +1,24 @@
+<a
+  class="resource-card"
+  [routerLink]="['/events', resource.id]"
+  aria-label="Otwórz szczegóły wydarzenia"
+>
+  <div class="resource-thumb" aria-hidden="true">
+    <div class="resource-frame"></div>
+    <span class="resource-sun"></span>
+    <span class="resource-peak resource-peak-left"></span>
+    <span class="resource-peak resource-peak-right"></span>
+  </div>
+
+  <div class="resource-content">
+    <h3>{{ resource.title }}</h3>
+    <p>{{ resource.categories }}</p>
+    <p>{{ resource.city }}</p>
+    <p>{{ resource.location }}</p>
+    <p>{{ resource.startAt }}</p>
+    <p>{{ resource.endAt }}</p>
+    <p>{{ resource.status }}</p>
+  </div>
+
+  <p class="resource-description">{{ resource.description }}</p>
+</a>
