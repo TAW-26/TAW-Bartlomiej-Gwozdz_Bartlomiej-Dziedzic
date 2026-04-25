@@ -1,0 +1,20 @@
+<main class="login-wrap">
+  <section class="login-panel">
+    <h2>Logowanie</h2>
+    <p class="login-lead">Zaloguj się, by móc korzystać z panelu użytkownika i listy wydarzeń.</p>
+
+    <form class="login-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+      <label class="login-field">
+        <span>Login</span>
+        <input type="text" formControlName="login" autocomplete="username" />
+      </label>
+
+      <label class="login-field">
+        <span>Hasło</span>
+        <input type="password" formControlName="password" autocomplete="current-password" />
+      </label>
+
+      <button class="login-submit" type="submit">Zaloguj się</button>
+    </form>
+  </section>
+</main>
