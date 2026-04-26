@@ -1,6 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, inject } from '@angular/core';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth';
 
 type LoginFormModel = {
   email: FormControl<string>;
@@ -24,6 +31,9 @@ type FormMode = 'login' | 'register';
   styleUrl: './login.component.scss',
 })
 export class LoginComponent {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
   protected mode: FormMode = 'login';
   protected isSubmitting = false;
   protected message = '';
@@ -74,8 +84,21 @@ export class LoginComponent {
       return;
     }
 
-    this.messageKind = 'success';
-    this.message = 'Formularz logowania gotowy (logika API będzie podłączona później).';
+    this.isSubmitting = true;
+    this.message = '';
+
+    this.auth.login(this.loginForm.getRawValue()).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        void this.router.navigate(['/user']);
+      },
+      error: (err: { error?: { error?: string } }) => {
+        this.isSubmitting = false;
+        this.messageKind = 'error';
+        this.message =
+          err?.error?.error ?? 'Błąd logowania. Sprawdź dane i spróbuj ponownie.';
+      },
+    });
   }
 
   protected submitRegister(): void {
@@ -85,13 +108,30 @@ export class LoginComponent {
     }
 
     const payload = this.registerForm.getRawValue();
+
     if (payload.password !== payload.confirmPassword) {
       this.messageKind = 'error';
       this.message = 'Hasła muszą być identyczne.';
       return;
     }
 
-    this.messageKind = 'success';
-    this.message = 'Formularz rejestracji gotowy (logika API będzie podłączona później).';
+    this.isSubmitting = true;
+    this.message = '';
+
+    this.auth.register(payload).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.messageKind = 'success';
+        this.message = 'Konto utworzone! Możesz się teraz zalogować.';
+        this.setMode('login');
+        this.loginForm.patchValue({ email: payload.email });
+      },
+      error: (err: { error?: { error?: string } }) => {
+        this.isSubmitting = false;
+        this.messageKind = 'error';
+        this.message =
+          err?.error?.error ?? 'Błąd rejestracji. Spróbuj ponownie.';
+      },
+    });
   }
 }

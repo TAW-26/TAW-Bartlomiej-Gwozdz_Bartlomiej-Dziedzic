@@ -5,9 +5,13 @@
       <div class="avatar-shoulders"></div>
     </div>
 
-    <p class="profile-line">Imie Nazwisko</p>
-    <p class="profile-line">Email: example@op.pl</p>
-    <p class="profile-line">Uzytkownik/Organizator/Admin</p>
+    <p class="profile-line">{{ user()?.fullName }}</p>
+    <p class="profile-line">Email: {{ user()?.email }}</p>
+    <p class="profile-line">{{ roleLabel }}</p>
+
+    <button class="logout-btn" type="button" (click)="logout()">
+      Wyloguj się
+    </button>
 
     <section class="notifications" aria-label="Powiadomienia">
       <h2>Powiadomienia</h2>

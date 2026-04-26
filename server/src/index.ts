@@ -430,24 +430,23 @@ const startServer = async (): Promise<void> => {
   const mongoUri = buildMongoUri();
 
   if (!mongoUri) {
-    console.error(
-      "Missing MongoDB configuration. Set server/secrets.json (preferred) or env vars MONGODB_URI / MONGODB_USER + MONGODB_PASSWORD.",
+    console.warn(
+      "no configurtion of MongoDB."
     );
-    process.exit(1);
+  } else {
+    try {
+      await mongoose.connect(mongoUri);
+      console.log("Connected to MongoDB");
+      await ensureAdminSeed();
+    } catch (error) {
+      console.error(
+        "error connecting to mongoDB",
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 
-  try {
-    await mongoose.connect(mongoUri);
-    console.log("Connected to MongoDB");
-    await ensureAdminSeed();
-  } catch (error) {
-    console.error(
-      "Failed to connect to MongoDB:",
-      error instanceof Error ? error.message : error,
-    );
-    process.exit(1);
-  }
-
+  // Uruchamiamy serwer niezależnie od tego, czy baza danych działa, czy nie
   app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log(`Health check: http://localhost:${PORT}/api/health`);
