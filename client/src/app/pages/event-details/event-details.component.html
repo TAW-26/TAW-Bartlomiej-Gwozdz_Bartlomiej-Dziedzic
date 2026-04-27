@@ -1,0 +1,32 @@
+@if (event; as currentEvent) {
+  <main class="details-wrap">
+    <section class="details-panel">
+      <div class="details-top">
+        <div class="details-image" aria-hidden="true">
+          <div class="details-image-frame"></div>
+          <span class="details-sun"></span>
+          <span class="details-mountain details-mountain-left"></span>
+          <span class="details-mountain details-mountain-right"></span>
+        </div>
+
+        <div class="details-meta">
+          <h2>{{ currentEvent.title }}</h2>
+          <p>{{ currentEvent.categories }}</p>
+          <p>{{ currentEvent.city }}</p>
+          <p>{{ currentEvent.location }}</p>
+          <p>{{ currentEvent.startAt }}</p>
+          <p>{{ currentEvent.endAt }}</p>
+          <p>{{ currentEvent.status }}</p>
+        </div>
+      </div>
+
+      <p class="details-description">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at magna augue. Praesent
+        ullamcorper augue mi, quis ornare libero sodales eget. Sed ullamcorper dolor libero,
+        fringilla porta ligula lobortis quis. In cursus tellus non neque ultrices efficitur.
+      </p>
+
+      <button class="details-action" type="button">Join/Leave</button>
+    </section>
+  </main>
+}
