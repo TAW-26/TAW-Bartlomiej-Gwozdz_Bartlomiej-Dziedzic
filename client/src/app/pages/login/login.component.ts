@@ -1,11 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 
@@ -33,6 +28,12 @@ type FormMode = 'login' | 'register';
 export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+
+  private showAlert(text: string): void {
+    if (typeof window !== 'undefined') {
+      window.alert(text);
+    }
+  }
 
   protected mode: FormMode = 'login';
   protected isSubmitting = false;
@@ -81,6 +82,7 @@ export class LoginComponent {
   protected submitLogin(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
+      this.showAlert('Wypełnij poprawnie email i hasło przed zalogowaniem.');
       return;
     }
 
@@ -90,13 +92,18 @@ export class LoginComponent {
     this.auth.login(this.loginForm.getRawValue()).subscribe({
       next: () => {
         this.isSubmitting = false;
+        this.showAlert('Logowanie udane. Przekierowuję do panelu użytkownika.');
         void this.router.navigate(['/user']);
       },
-      error: (err: { error?: { error?: string } }) => {
+      error: (err: { status?: number; error?: { error?: string } }) => {
         this.isSubmitting = false;
         this.messageKind = 'error';
+        const backendMessage = err?.error?.error;
         this.message =
-          err?.error?.error ?? 'Błąd logowania. Sprawdź dane i spróbuj ponownie.';
+          err?.status === 401
+            ? 'Błędny email lub hasło.'
+            : (backendMessage ?? 'Błąd logowania. Sprawdź dane i spróbuj ponownie.');
+        this.showAlert(`Logowanie nieudane: ${this.message}`);
       },
     });
   }
@@ -129,8 +136,7 @@ export class LoginComponent {
       error: (err: { error?: { error?: string } }) => {
         this.isSubmitting = false;
         this.messageKind = 'error';
-        this.message =
-          err?.error?.error ?? 'Błąd rejestracji. Spróbuj ponownie.';
+        this.message = err?.error?.error ?? 'Błąd rejestracji. Spróbuj ponownie.';
       },
     });
   }
