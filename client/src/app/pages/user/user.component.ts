@@ -1,6 +1,8 @@
+import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
+import { LoginComponent } from '../login/login.component';
 
 const ROLE_LABEL: Record<string, string> = {
   user: 'Użytkownik',
@@ -11,6 +13,7 @@ const ROLE_LABEL: Record<string, string> = {
 @Component({
   selector: 'app-user',
   standalone: true,
+  imports: [CommonModule, LoginComponent],
   templateUrl: './user.component.html',
   styleUrl: './user.component.scss',
 })
@@ -26,6 +29,6 @@ export class UserComponent {
 
   protected logout(): void {
     this.auth.logout();
-    void this.router.navigate(['/login']);
+    void this.router.navigate(['/user']);
   }
 }

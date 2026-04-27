@@ -1,4 +1,4 @@
-<main class="user-wrap">
+<main class="user-wrap" *ngIf="user(); else loggedOutPanel">
   <section class="user-panel">
     <div class="profile-box" aria-hidden="true">
       <div class="avatar"></div>
@@ -9,9 +9,7 @@
     <p class="profile-line">Email: {{ user()?.email }}</p>
     <p class="profile-line">{{ roleLabel }}</p>
 
-    <button class="logout-btn" type="button" (click)="logout()">
-      Wyloguj się
-    </button>
+    <button class="logout-btn" type="button" (click)="logout()">Wyloguj się</button>
 
     <section class="notifications" aria-label="Powiadomienia">
       <h2>Powiadomienia</h2>
@@ -38,3 +36,7 @@
     </section>
   </section>
 </main>
+
+<ng-template #loggedOutPanel>
+  <app-login></app-login>
+</ng-template>

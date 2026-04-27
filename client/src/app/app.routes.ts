@@ -3,7 +3,6 @@ import { HomeComponent } from './pages/home/home.component';
 import { UserComponent } from './pages/user/user.component';
 import { EventsComponent } from './pages/events/events.component';
 import { EventDetailsComponent } from './pages/event-details/event-details.component';
-import { LoginComponent } from './pages/login/login.component';
 
 export const routes: Routes = [
   {
@@ -12,7 +11,8 @@ export const routes: Routes = [
   },
   {
     path: 'login',
-    component: LoginComponent,
+    redirectTo: 'user',
+    pathMatch: 'full',
   },
   {
     path: 'events',
