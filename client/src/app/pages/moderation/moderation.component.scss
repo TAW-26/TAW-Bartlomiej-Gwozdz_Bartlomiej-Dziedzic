@@ -117,10 +117,30 @@
   margin-right: 8px;
   padding: 8px 10px 10px;
   border-radius: 8px;
+  /* higher-contrast, solid background for better readability */
   background: linear-gradient(180deg, #16315a 0%, #122646 100%);
-  color: #e9efff;
-  border: 2px solid #07101d;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-weight: 600;
+  border: 2px solid rgba(7, 16, 29, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Improve readability of native dropdown options where supported */
+.users-list .user-item .actions select option {
+  background: #f5f1e5;
+  color: #111827;
+  font-weight: 600;
+  padding: 6px 8px;
+}
+
+/* Fallback for dark-theme browsers: dark option background with white text */
+@media (prefers-color-scheme: dark) {
+  .users-list .user-item .actions select option {
+    background: #122646;
+    color: #ffffff;
+  }
 }
 
 .users-list .user-item .actions select:focus {
