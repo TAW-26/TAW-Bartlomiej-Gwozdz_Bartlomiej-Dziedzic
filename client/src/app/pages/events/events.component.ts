@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
 import { ResourceCardComponent } from '../../components/resource-card/resource-card.component';
-import { EVENTS, EventItem } from '../../shared/event-data';
+import { EventItem, EventStatus } from '../../models/api';
+import { EventService } from '../../services/event';
 
 type EventSearchFilters = {
   q: FormControl<string>;
@@ -19,7 +20,9 @@ type EventSearchFilters = {
   templateUrl: './events.component.html',
   styleUrl: './events.component.scss',
 })
-export class EventsComponent {
+export class EventsComponent implements OnInit {
+  private readonly eventService = inject(EventService);
+
   protected readonly filters = new FormGroup<EventSearchFilters>({
     q: new FormControl('', { nonNullable: true }),
     city: new FormControl('', { nonNullable: true }),
@@ -29,10 +32,27 @@ export class EventsComponent {
     status: new FormControl('', { nonNullable: true }),
   });
 
-  protected readonly resources: EventItem[] = EVENTS;
+  protected resources: EventItem[] = [];
+
+  ngOnInit(): void {
+    this.loadEvents();
+  }
 
   protected submitSearch(): void {
-    const filters = this.filters.getRawValue();
-    console.log('Search filters:', filters);
+    this.loadEvents();
+  }
+
+  private loadEvents(): void {
+    const raw = this.filters.getRawValue();
+    this.eventService.getEvents({
+      q: raw.q || undefined,
+      city: raw.city || undefined,
+      category: raw.category || undefined,
+      from: raw.from || undefined,
+      to: raw.to || undefined,
+      status: (raw.status as EventStatus) || undefined,
+    }).subscribe((events) => {
+      this.resources = events;
+    });
   }
 }

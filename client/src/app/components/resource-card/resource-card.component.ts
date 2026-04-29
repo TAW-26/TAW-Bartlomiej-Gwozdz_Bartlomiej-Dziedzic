@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { EventItem } from '../../shared/event-data';
+import { EventItem } from '../../models/api';
 
 @Component({
   selector: 'app-resource-card',
