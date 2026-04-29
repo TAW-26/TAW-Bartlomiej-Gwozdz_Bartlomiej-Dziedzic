@@ -6,8 +6,30 @@
       <button class="logout-btn" (click)="loadEvents()">Odśwież</button>
     </div>
 
-    <p *ngIf="loading">Ładowanie...</p>
     <p *ngIf="error" class="error">Błąd: {{ error }}</p>
+
+    <section class="events-manage">
+      <h3>Wydarzenia do moderacji</h3>
+
+      <ul class="events-list moderation-events-list">
+        <li *ngFor="let event of events" class="event-item moderation-event-item">
+          <div class="info">
+            <div>
+              <strong>{{ event.name }}</strong>
+            </div>
+            <div class="meta">{{ event.category }} · {{ event.city }}</div>
+            <div class="meta">{{ event.location }}</div>
+            <div class="meta">
+              {{ event.startsAt }} - {{ event.endsAt }} · {{ event.status }} · Uczestnicy:
+              {{ event.participantsCount }}
+            </div>
+          </div>
+          <div class="actions">
+            <button class="logout-btn" (click)="removeEvent(event.id)">Usuń wydarzenie</button>
+          </div>
+        </li>
+      </ul>
+    </section>
 
     <section class="users-manage">
       <h3>Zarządzanie użytkownikami</h3>
@@ -16,7 +38,6 @@
         <button class="logout-btn" (click)="loadUsers()">Odśwież użytkowników</button>
       </div>
 
-      <p *ngIf="loadingUsers">Ładowanie użytkowników...</p>
       <p *ngIf="usersError" class="error">Błąd: {{ usersError }}</p>
 
       <ul class="events-list users-list">
