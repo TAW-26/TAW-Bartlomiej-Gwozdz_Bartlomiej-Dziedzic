@@ -3,7 +3,7 @@
     <h2>Panel moderacji</h2>
 
     <div class="controls">
-      <button class="logout-btn" (click)="loadEvents()">Odśwież</button>
+      <button class="logout-btn" (click)="refreshData()">Odśwież dane</button>
     </div>
 
     <p *ngIf="error" class="error">Błąd: {{ error }}</p>
@@ -33,10 +33,6 @@
 
     <section class="users-manage">
       <h3>Zarządzanie użytkownikami</h3>
-
-      <div class="controls">
-        <button class="logout-btn" (click)="loadUsers()">Odśwież użytkowników</button>
-      </div>
 
       <p *ngIf="usersError" class="error">Błąd: {{ usersError }}</p>
 

@@ -29,7 +29,12 @@ export class ModerationComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.refreshData();
+  }
+
+  refreshData(): void {
     this.loadEvents();
+    this.loadUsers();
   }
 
   loadEvents(): void {
