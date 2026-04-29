@@ -7,7 +7,6 @@ import { AuthService } from '../../services/auth';
 @Component({
   selector: 'app-event-details',
   standalone: true,
-  imports: [RouterLink],
   templateUrl: './event-details.component.html',
   styleUrl: './event-details.component.scss',
 })
