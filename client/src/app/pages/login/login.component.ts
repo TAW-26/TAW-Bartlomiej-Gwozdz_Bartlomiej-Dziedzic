@@ -1,27 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { LoginPayload, RegisterPayload } from '../../models/api';
 import { AuthService } from '../../services/auth';
-
-type LoginFormModel = {
-  email: FormControl<string>;
-  password: FormControl<string>;
-};
-
-type RegisterFormModel = {
-  fullName: FormControl<string>;
-  email: FormControl<string>;
-  password: FormControl<string>;
-  confirmPassword: FormControl<string>;
-};
+import { LoginFormComponent } from './login-form/login-form.component';
+import { RegisterFormComponent } from './register-form/register-form.component';
 
 type FormMode = 'login' | 'register';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, LoginFormComponent, RegisterFormComponent],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
@@ -39,57 +29,22 @@ export class LoginComponent {
   protected isSubmitting = false;
   protected message = '';
   protected messageKind: 'success' | 'error' = 'success';
+  protected loginEmail = '';
 
   protected get panelActionText(): string {
     return this.mode === 'login' ? 'Zaloguj się' : 'Zarejestruj się';
   }
-
-  protected readonly loginForm = new FormGroup<LoginFormModel>({
-    email: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.email],
-    }),
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-  });
-
-  protected readonly registerForm = new FormGroup<RegisterFormModel>({
-    fullName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    email: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.email],
-    }),
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(8)],
-    }),
-    confirmPassword: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-  });
 
   protected setMode(mode: FormMode): void {
     this.mode = mode;
     this.message = '';
   }
 
-  protected submitLogin(): void {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
-      this.showAlert('Wypełnij poprawnie email i hasło przed zalogowaniem.');
-      return;
-    }
-
+  protected submitLogin(payload: LoginPayload): void {
     this.isSubmitting = true;
     this.message = '';
 
-    this.auth.login(this.loginForm.getRawValue()).subscribe({
+    this.auth.login(payload).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.showAlert('Logowanie udane. Przekierowuję do panelu użytkownika.');
@@ -108,14 +63,7 @@ export class LoginComponent {
     });
   }
 
-  protected submitRegister(): void {
-    if (this.registerForm.invalid) {
-      this.registerForm.markAllAsTouched();
-      return;
-    }
-
-    const payload = this.registerForm.getRawValue();
-
+  protected submitRegister(payload: RegisterPayload): void {
     if (payload.password !== payload.confirmPassword) {
       this.messageKind = 'error';
       this.message = 'Hasła muszą być identyczne.';
@@ -131,7 +79,7 @@ export class LoginComponent {
         this.messageKind = 'success';
         this.message = 'Konto utworzone! Możesz się teraz zalogować.';
         this.setMode('login');
-        this.loginForm.patchValue({ email: payload.email });
+        this.loginEmail = payload.email;
       },
       error: (err: { error?: { error?: string } }) => {
         this.isSubmitting = false;

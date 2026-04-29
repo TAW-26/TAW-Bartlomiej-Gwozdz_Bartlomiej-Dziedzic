@@ -3,12 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import {
-  LoginPayload,
-  LoginResponse,
-  RegisterPayload,
-  User,
-} from '../models/api';
+import { LoginPayload, LoginResponse, RegisterPayload, User } from '../models/api';
 
 const TOKEN_KEY = 'auth_token';
 
@@ -50,7 +45,6 @@ export class AuthService {
     return localStorage.getItem(TOKEN_KEY);
   }
 
- 
   private setToken(token: string): void {
     if (this.isBrowser) localStorage.setItem(TOKEN_KEY, token);
   }
