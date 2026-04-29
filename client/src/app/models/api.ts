@@ -33,35 +33,41 @@ export interface LoginResponse {
 
 export interface EventItem {
   id: string;
-  title: string;
+  name: string;
   description: string;
   city: string;
   location: string;
-  categories: string[];
-  startAt: string;   
-  endAt: string;    
+  category: string;
+  startsAt: string;
+  endsAt: string;
   status: EventStatus;
   organizerId: string;
-  participantCount?: number;
+  participantsCount: number;
+  maxParticipants?: number;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface EventFilters {
   q?: string;
   city?: string;
   category?: string;
-  from?: string;   
-  to?: string; 
+  from?: string;
+  to?: string;
   status?: EventStatus;
 }
 
 export interface CreateEventPayload {
-  title: string;
+  name: string;
   description: string;
   city: string;
   location: string;
-  categories: string[];
-  startAt: string;
-  endAt: string;
+  category: string;
+  startsAt: string;
+  endsAt: string;
+  maxParticipants?: number;
+  imageUrl?: string;
 }
 
 export type UpdateEventPayload = Partial<CreateEventPayload>;
