@@ -3,6 +3,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { UserComponent } from './pages/user/user.component';
 import { EventsComponent } from './pages/events/events.component';
 import { EventDetailsComponent } from './pages/event-details/event-details.component';
+import { ModerationComponent } from './pages/moderation/moderation.component';
 import { eventsResolver } from './pages/events/events.resolver';
 
 export const routes: Routes = [
@@ -29,5 +30,9 @@ export const routes: Routes = [
   {
     path: 'user',
     component: UserComponent,
+  },
+  {
+    path: 'moderation',
+    component: ModerationComponent,
   },
 ];

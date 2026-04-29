@@ -1,0 +1,42 @@
+<main class="user-wrap">
+  <section class="user-panel moderation-panel">
+    <h2>Panel moderacji</h2>
+
+    <div class="controls">
+      <button class="logout-btn" (click)="loadEvents()">Odśwież</button>
+    </div>
+
+    <p *ngIf="loading">Ładowanie...</p>
+    <p *ngIf="error" class="error">Błąd: {{ error }}</p>
+
+    <section class="users-manage">
+      <h3>Zarządzanie użytkownikami</h3>
+
+      <div class="controls">
+        <button class="logout-btn" (click)="loadUsers()">Odśwież użytkowników</button>
+      </div>
+
+      <p *ngIf="loadingUsers">Ładowanie użytkowników...</p>
+      <p *ngIf="usersError" class="error">Błąd: {{ usersError }}</p>
+
+      <ul class="events-list users-list">
+        <li *ngFor="let u of users" class="event-item user-item">
+          <div class="info">
+            <div>
+              <strong>{{ u.fullName }}</strong>
+            </div>
+            <div class="meta">{{ u.email }}</div>
+          </div>
+          <div class="actions">
+            <select [value]="u.role" (change)="changeUserRole(u.id, $any($event.target).value)">
+              <option value="user">Użytkownik</option>
+              <option value="organizer">Organizator</option>
+              <option value="admin">Administrator</option>
+            </select>
+            <button class="logout-btn" (click)="deleteUser(u.id)">Usuń</button>
+          </div>
+        </li>
+      </ul>
+    </section>
+  </section>
+</main>

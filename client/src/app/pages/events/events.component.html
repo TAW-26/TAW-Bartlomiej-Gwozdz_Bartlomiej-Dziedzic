@@ -44,7 +44,7 @@
     </form>
 
     <div class="events-list">
-      @for (resource of resources; track resource.name + resource.description) {
+      @for (resource of resources(); track resource.id) {
         <app-resource-card [resource]="resource"></app-resource-card>
       }
     </div>

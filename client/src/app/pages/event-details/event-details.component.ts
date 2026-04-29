@@ -8,7 +8,7 @@ import { AuthService } from '../../services/auth';
   selector: 'app-event-details',
   standalone: true,
   templateUrl: './event-details.component.html',
-  styleUrl: './event-details.component.scss',
+  styleUrls: ['./event-details.component.scss'],
 })
 export class EventDetailsComponent {
   private readonly eventService = inject(EventService);

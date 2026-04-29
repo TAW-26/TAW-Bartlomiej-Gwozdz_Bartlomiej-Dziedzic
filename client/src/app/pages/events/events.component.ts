@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
 import { ResourceCardComponent } from '../../components/resource-card/resource-card.component';
@@ -19,7 +19,7 @@ type EventSearchFilters = {
   standalone: true,
   imports: [ReactiveFormsModule, ResourceCardComponent],
   templateUrl: './events.component.html',
-  styleUrl: './events.component.scss',
+  styleUrls: ['./events.component.scss'],
 })
 export class EventsComponent {
   private readonly eventService = inject(EventService);
@@ -34,13 +34,14 @@ export class EventsComponent {
     status: new FormControl('', { nonNullable: true }),
   });
 
-  protected resources: EventItem[] = [];
+  protected readonly resources = signal<EventItem[]>([]);
 
   constructor() {
-    this.resources = (this.route.snapshot.data['events'] as EventItem[] | undefined) ?? [];
+    this.resources.set((this.route.snapshot.data['events'] as EventItem[] | undefined) ?? []);
   }
 
-  protected submitSearch(): void {
+  protected submitSearch(event?: Event): void {
+    event?.preventDefault();
     this.loadEvents();
   }
 
@@ -56,7 +57,7 @@ export class EventsComponent {
         status: (raw.status as EventStatus) || undefined,
       })
       .subscribe((events) => {
-        this.resources = events;
+        this.resources.set(events);
       });
   }
 }

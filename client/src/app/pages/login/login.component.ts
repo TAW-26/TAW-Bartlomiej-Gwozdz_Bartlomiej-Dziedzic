@@ -23,7 +23,7 @@ type FormMode = 'login' | 'register';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
+  styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);

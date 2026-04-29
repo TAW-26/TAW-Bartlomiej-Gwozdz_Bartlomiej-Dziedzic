@@ -59,6 +59,67 @@
   text-shadow: 0 3px 0 #090c14;
 }
 
+.logout-btn {
+  margin-top: 18px;
+  border: 2px solid #07101d;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #16315a 0%, #122646 100%);
+  color: #e9efff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 8px 18px 10px;
+  min-width: 180px;
+  font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.admin-btn {
+  margin-top: 12px;
+  border: 2px solid #07101d;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #16315a 0%, #122646 100%);
+  color: #e9efff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 8px 18px 10px;
+  min-width: 160px;
+  font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.admin-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.logout-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+  filter: brightness(0.98);
+}
+
+.logout-btn:focus-visible {
+  outline: 3px solid rgba(161, 199, 255, 0.95);
+  outline-offset: 3px;
+}
+
 .notifications {
   margin-top: 24px;
   width: min(630px, 100%);
@@ -166,6 +227,12 @@
 @media (max-width: 800px) {
   .profile-line {
     text-align: center;
+  }
+
+  .logout-btn {
+    width: 100%;
+    min-width: 0;
+    font-size: 18px;
   }
 
   .notice-item {

@@ -17,7 +17,7 @@ const ROLE_LABEL: Record<string, string> = {
   standalone: true,
   imports: [CommonModule, LoginComponent],
   templateUrl: './user.component.html',
-  styleUrl: './user.component.scss',
+  styleUrls: ['./user.component.scss'],
 })
 export class UserComponent {
   private readonly auth = inject(AuthService);
@@ -47,6 +47,10 @@ export class UserComponent {
 
       this.destroyRef.onDestroy(() => window.clearInterval(timerId));
     }
+  }
+
+  protected goToModeration(): void {
+    void this.router.navigate(['/moderation']);
   }
 
   protected get roleLabel(): string {

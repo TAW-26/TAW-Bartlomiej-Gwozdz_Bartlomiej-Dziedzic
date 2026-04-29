@@ -7,7 +7,7 @@ import { EventItem } from '../../models/api';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './resource-card.component.html',
-  styleUrl: './resource-card.component.scss',
+  styleUrls: ['./resource-card.component.scss'],
 })
 export class ResourceCardComponent {
   @Input({ required: true }) resource!: EventItem;
