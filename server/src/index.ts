@@ -18,6 +18,7 @@ import {
   cancelParticipation,
   listOrganizerEvents,
   removeParticipantFromEvent,
+  listParticipantEvents,
   moderateEventRemoval,
 } from "./businessLogic";
 import {
@@ -351,6 +352,22 @@ app.get(
   },
 );
 
+// GET /api/users/me/events - lista wydarzen, do ktorych dolaczyl zalogowany uzytkownik
+app.get(
+  "/api/users/me/events",
+  authenticateJWT,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const events = await listParticipantEvents(req.user!.id);
+      return res.json(events);
+    } catch (error) {
+      return res.status(403).json({
+        error: error instanceof Error ? error.message : "Access denied",
+      });
+    }
+  },
+);
+
 // PUT /api/users/:id/role - zmiana roli uzytkownika (tylko admin)
 app.put(
   "/api/users/:id/role",
@@ -430,9 +447,7 @@ const startServer = async (): Promise<void> => {
   const mongoUri = buildMongoUri();
 
   if (!mongoUri) {
-    console.warn(
-      "no configurtion of MongoDB."
-    );
+    console.warn("no configurtion of MongoDB.");
   } else {
     try {
       await mongoose.connect(mongoUri);

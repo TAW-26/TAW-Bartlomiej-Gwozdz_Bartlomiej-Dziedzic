@@ -3,6 +3,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { UserComponent } from './pages/user/user.component';
 import { EventsComponent } from './pages/events/events.component';
 import { EventDetailsComponent } from './pages/event-details/event-details.component';
+import { eventsResolver } from './pages/events/events.resolver';
 
 export const routes: Routes = [
   {
@@ -17,6 +18,9 @@ export const routes: Routes = [
   {
     path: 'events',
     component: EventsComponent,
+    resolve: {
+      events: eventsResolver,
+    },
   },
   {
     path: 'events/:id',

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { User, UserRole } from '../models/api';
+import { EventItem, User, UserRole } from '../models/api';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -31,5 +31,13 @@ export class UserService {
    */
   deleteUser(userId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${userId}`);
+  }
+
+  /**
+   * GET /api/users/me/events
+   * Lista wydarzen, do ktorych dolaczyl zalogowany uzytkownik.
+   */
+  getMyEvents(): Observable<EventItem[]> {
+    return this.http.get<EventItem[]>(`${this.apiUrl}/me/events`);
   }
 }

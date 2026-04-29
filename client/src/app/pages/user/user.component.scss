@@ -67,6 +67,11 @@
   padding: 6px 14px 14px;
 }
 
+.notification-list {
+  display: grid;
+  gap: 8px;
+}
+
 .notifications h2 {
   margin: 0 0 6px;
   text-align: center;
@@ -78,10 +83,15 @@
 
 .notice-item {
   display: grid;
-  grid-template-columns: 82px 1fr auto;
+  grid-template-columns: 82px minmax(0, 1fr);
   align-items: center;
   gap: 16px;
   padding: 8px 2px;
+}
+
+.notice-copy {
+  display: grid;
+  gap: 4px;
 }
 
 .event-thumb {
@@ -138,6 +148,21 @@
   color: #d4e0f3;
 }
 
+.notice-meta {
+  margin: 0;
+  font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+  font-size: clamp(12px, 1vw, 18px);
+  color: rgba(212, 224, 243, 0.82);
+}
+
+.notifications-empty {
+  margin: 0;
+  font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+  font-size: clamp(16px, 1.35vw, 22px);
+  line-height: 1.2;
+  color: #d4e0f3;
+}
+
 @media (max-width: 800px) {
   .profile-line {
     text-align: center;
@@ -145,10 +170,5 @@
 
   .notice-item {
     grid-template-columns: 70px 1fr;
-  }
-
-  .notice-time {
-    grid-column: 2;
-    margin-top: -10px;
   }
 }

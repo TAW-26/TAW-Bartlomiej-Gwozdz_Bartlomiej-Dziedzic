@@ -345,6 +345,27 @@ export const listEventsByOrganizer = async (
   return events.map(mapEventDocument).map(toEventView);
 };
 
+export const listEventsByParticipant = async (
+  userId: string,
+): Promise<EventView[]> => {
+  const events = await EventModel.find({ participants: userId }).exec();
+  return events
+    .map(mapEventDocument)
+    .sort((left, right) => {
+      const leftPopularity = left.participants.length;
+      const rightPopularity = right.participants.length;
+
+      if (rightPopularity !== leftPopularity) {
+        return rightPopularity - leftPopularity;
+      }
+
+      return (
+        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+      );
+    })
+    .map(toEventView);
+};
+
 export const updateEvent = async (
   id: string,
   patch: Partial<
