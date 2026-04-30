@@ -1,36 +1,46 @@
-<main class="user-wrap">
+<main class="user-wrap" *ngIf="user(); else loggedOutPanel">
   <section class="user-panel">
     <div class="profile-box" aria-hidden="true">
       <div class="avatar"></div>
       <div class="avatar-shoulders"></div>
     </div>
 
-    <p class="profile-line">Imie Nazwisko</p>
-    <p class="profile-line">Email: example@op.pl</p>
-    <p class="profile-line">Uzytkownik/Organizator/Admin</p>
+    <p class="profile-line">{{ user()?.fullName }}</p>
+    <p class="profile-line">Email: {{ user()?.email }}</p>
+    <p class="profile-line">{{ roleLabel }}</p>
+
+    <button class="logout-btn" type="button" (click)="logout()">Wyloguj się</button>
 
     <section class="notifications" aria-label="Powiadomienia">
       <h2>Powiadomienia</h2>
 
-      <article class="notice-item">
-        <div class="event-thumb" aria-hidden="true">
-          <span class="thumb-sun"></span>
-          <span class="thumb-mountain-left"></span>
-          <span class="thumb-mountain-right"></span>
-        </div>
-        <p class="notice-name">NAME</p>
-        <p class="notice-time">starts tommorow</p>
-      </article>
+      @if (countdownEvents.length > 0) {
+        <div class="notification-list">
+          @for (event of countdownEvents; track event.id) {
+            <article class="notice-item">
+              <div class="event-thumb" aria-hidden="true">
+                <span class="thumb-sun"></span>
+                <span class="thumb-mountain-left"></span>
+                <span class="thumb-mountain-right"></span>
+              </div>
 
-      <article class="notice-item">
-        <div class="event-thumb" aria-hidden="true">
-          <span class="thumb-sun"></span>
-          <span class="thumb-mountain-left"></span>
-          <span class="thumb-mountain-right"></span>
+              <div class="notice-copy">
+                <p class="notice-name">{{ event.name }}</p>
+                <p class="notice-time">{{ event.countdownLabel }}</p>
+                <p class="notice-meta">{{ event.city }} • {{ event.location }}</p>
+              </div>
+            </article>
+          }
         </div>
-        <p class="notice-name">NAME</p>
-        <p class="notice-time">starts in 2 days</p>
-      </article>
+      } @else {
+        <p class="notifications-empty">
+          Gdy dołączysz do wydarzenia, pojawi się tutaj odliczanie do jego startu.
+        </p>
+      }
     </section>
   </section>
 </main>
+
+<ng-template #loggedOutPanel>
+  <app-login></app-login>
+</ng-template>

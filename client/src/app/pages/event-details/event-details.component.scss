@@ -114,6 +114,13 @@
   cursor: pointer;
 }
 
+.danger-action {
+  background: linear-gradient(180deg, #6b1c1c 0%, #4a1212 100%);
+  color: #ffd4d4;
+  border: 2px solid #2a0a0a;
+  font-size: clamp(18px, 1.5vw, 28px);
+}
+
 @media (max-width: 800px) {
   .details-panel {
     width: min(900px, calc(100% - 16px));

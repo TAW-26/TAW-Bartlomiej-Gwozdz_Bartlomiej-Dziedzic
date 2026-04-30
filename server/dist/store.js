@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toSafeEventView = exports.logModerationAction = exports.listEventParticipants = exports.removeParticipant = exports.addParticipant = exports.deleteEvent = exports.updateEvent = exports.listEventsByOrganizer = exports.listEvents = exports.getEventById = exports.createEvent = exports.deleteUser = exports.updateUser = exports.getPublicUsers = exports.getPublicUserById = exports.getUserById = exports.getUserByEmail = exports.createUser = exports.ensureAdminSeed = exports.db = void 0;
+exports.toSafeEventView = exports.logModerationAction = exports.listEventParticipants = exports.removeParticipant = exports.addParticipant = exports.deleteEvent = exports.updateEvent = exports.listEventsByParticipant = exports.listEventsByOrganizer = exports.listEvents = exports.getEventById = exports.createEvent = exports.deleteUser = exports.updateUser = exports.getPublicUsers = exports.getPublicUserById = exports.getUserById = exports.getUserByEmail = exports.createUser = exports.ensureAdminSeed = exports.db = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const userSchema = new mongoose_1.default.Schema({
     email: { type: String, required: true, unique: true, lowercase: true },
@@ -236,6 +236,21 @@ const listEventsByOrganizer = async (organizerId) => {
     return events.map(mapEventDocument).map(toEventView);
 };
 exports.listEventsByOrganizer = listEventsByOrganizer;
+const listEventsByParticipant = async (userId) => {
+    const events = await EventModel.find({ participants: userId }).exec();
+    return events
+        .map(mapEventDocument)
+        .sort((left, right) => {
+        const leftPopularity = left.participants.length;
+        const rightPopularity = right.participants.length;
+        if (rightPopularity !== leftPopularity) {
+            return rightPopularity - leftPopularity;
+        }
+        return (new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+    })
+        .map(toEventView);
+};
+exports.listEventsByParticipant = listEventsByParticipant;
 const updateEvent = async (id, patch) => {
     const updated = await EventModel.findByIdAndUpdate(id, {
         ...(patch.name !== undefined ? { name: patch.name } : {}),
@@ -326,3 +341,14 @@ const logModerationAction = async (input) => {
 exports.logModerationAction = logModerationAction;
 const toSafeEventView = (event) => toEventView(event);
 exports.toSafeEventView = toSafeEventView;
+// ---------------------------------------------------------------------------
+// In-memory override
+// When USE_MEMORY_DB=true all exported functions are replaced with in-memory
+// implementations so the server works without a MongoDB connection.
+// ---------------------------------------------------------------------------
+if (process.env.USE_MEMORY_DB === "true") {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mem = require("./store-memory");
+    Object.assign(exports, mem);
+    console.log("[MemDB] In-memory store activated (USE_MEMORY_DB=true).");
+}

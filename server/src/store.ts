@@ -345,6 +345,27 @@ export const listEventsByOrganizer = async (
   return events.map(mapEventDocument).map(toEventView);
 };
 
+export const listEventsByParticipant = async (
+  userId: string,
+): Promise<EventView[]> => {
+  const events = await EventModel.find({ participants: userId }).exec();
+  return events
+    .map(mapEventDocument)
+    .sort((left, right) => {
+      const leftPopularity = left.participants.length;
+      const rightPopularity = right.participants.length;
+
+      if (rightPopularity !== leftPopularity) {
+        return rightPopularity - leftPopularity;
+      }
+
+      return (
+        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+      );
+    })
+    .map(toEventView);
+};
+
 export const updateEvent = async (
   id: string,
   patch: Partial<
@@ -478,3 +499,15 @@ export const logModerationAction = async (
 };
 
 export const toSafeEventView = (event: Event): EventView => toEventView(event);
+
+// ---------------------------------------------------------------------------
+// In-memory override
+// When USE_MEMORY_DB=true all exported functions are replaced with in-memory
+// implementations so the server works without a MongoDB connection.
+// ---------------------------------------------------------------------------
+if (process.env.USE_MEMORY_DB === "true") {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const mem = require("./store-memory") as typeof import("./store-memory");
+  Object.assign(exports, mem);
+  console.log("[MemDB] In-memory store activated (USE_MEMORY_DB=true).");
+}

@@ -1,0 +1,59 @@
+<main class="user-wrap">
+  <section class="user-panel moderation-panel">
+    <h2>Panel moderacji</h2>
+
+    <div class="controls">
+      <button class="logout-btn" (click)="refreshData()">Odśwież dane</button>
+    </div>
+
+    <p *ngIf="error" class="error">Błąd: {{ error }}</p>
+
+    <section class="events-manage">
+      <h3>Wydarzenia do moderacji</h3>
+
+      <ul class="events-list moderation-events-list">
+        <li *ngFor="let event of events" class="event-item moderation-event-item">
+          <div class="info">
+            <div>
+              <strong>{{ event.name }}</strong>
+            </div>
+            <div class="meta">{{ event.category }} · {{ event.city }}</div>
+            <div class="meta">{{ event.location }}</div>
+            <div class="meta">
+              {{ event.startsAt }} - {{ event.endsAt }} · {{ event.status }} · Uczestnicy:
+              {{ event.participantsCount }}
+            </div>
+          </div>
+          <div class="actions">
+            <button class="logout-btn" (click)="removeEvent(event.id)">Usuń wydarzenie</button>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <section class="users-manage">
+      <h3>Zarządzanie użytkownikami</h3>
+
+      <p *ngIf="usersError" class="error">Błąd: {{ usersError }}</p>
+
+      <ul class="events-list users-list">
+        <li *ngFor="let u of users" class="event-item user-item">
+          <div class="info">
+            <div>
+              <strong>{{ u.fullName }}</strong>
+            </div>
+            <div class="meta">{{ u.email }}</div>
+          </div>
+          <div class="actions">
+            <select [value]="u.role" (change)="changeUserRole(u.id, $any($event.target).value)">
+              <option value="user">Użytkownik</option>
+              <option value="organizer">Organizator</option>
+              <option value="admin">Administrator</option>
+            </select>
+            <button class="logout-btn" (click)="deleteUser(u.id)">Usuń</button>
+          </div>
+        </li>
+      </ul>
+    </section>
+  </section>
+</main>

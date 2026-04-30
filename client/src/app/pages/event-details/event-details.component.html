@@ -1,4 +1,4 @@
-@if (event; as currentEvent) {
+@if (event(); as currentEvent) {
   <main class="details-wrap">
     <section class="details-panel">
       <div class="details-top">
@@ -10,23 +10,29 @@
         </div>
 
         <div class="details-meta">
-          <h2>{{ currentEvent.title }}</h2>
-          <p>{{ currentEvent.categories }}</p>
+          <h2>{{ currentEvent.name }}</h2>
+          <p>{{ currentEvent.category }}</p>
           <p>{{ currentEvent.city }}</p>
           <p>{{ currentEvent.location }}</p>
-          <p>{{ currentEvent.startAt }}</p>
-          <p>{{ currentEvent.endAt }}</p>
+          <p>{{ currentEvent.startsAt }}</p>
+          <p>{{ currentEvent.endsAt }}</p>
           <p>{{ currentEvent.status }}</p>
         </div>
       </div>
 
-      <p class="details-description">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam at magna augue. Praesent
-        ullamcorper augue mi, quis ornare libero sodales eget. Sed ullamcorper dolor libero,
-        fringilla porta ligula lobortis quis. In cursus tellus non neque ultrices efficitur.
-      </p>
+      <p class="details-description">{{ currentEvent.description }}</p>
 
-      <button class="details-action" type="button">Join/Leave</button>
+      @if (auth.isLoggedIn()) {
+        <button class="details-action" type="button" (click)="toggleParticipation()">
+          {{ isParticipant() ? 'Opuść wydarzenie' : 'Dołącz do wydarzenia' }}
+        </button>
+      }
+
+      @if (canManageEvent()) {
+        <button class="details-action danger-action" type="button" (click)="deleteEvent()">
+          Usuń wydarzenie
+        </button>
+      }
     </section>
   </main>
 }

@@ -18,6 +18,7 @@ import {
   cancelParticipation,
   listOrganizerEvents,
   removeParticipantFromEvent,
+  listParticipantEvents,
   moderateEventRemoval,
 } from "./businessLogic";
 import {
@@ -351,6 +352,22 @@ app.get(
   },
 );
 
+// GET /api/users/me/events - lista wydarzen, do ktorych dolaczyl zalogowany uzytkownik
+app.get(
+  "/api/users/me/events",
+  authenticateJWT,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const events = await listParticipantEvents(req.user!.id);
+      return res.json(events);
+    } catch (error) {
+      return res.status(403).json({
+        error: error instanceof Error ? error.message : "Access denied",
+      });
+    }
+  },
+);
+
 // PUT /api/users/:id/role - zmiana roli uzytkownika (tylko admin)
 app.put(
   "/api/users/:id/role",
@@ -427,27 +444,28 @@ app.post(
 );
 
 const startServer = async (): Promise<void> => {
-  const mongoUri = buildMongoUri();
-
-  if (!mongoUri) {
-    console.error(
-      "Missing MongoDB configuration. Set server/secrets.json (preferred) or env vars MONGODB_URI / MONGODB_USER + MONGODB_PASSWORD.",
-    );
-    process.exit(1);
-  }
-
-  try {
-    await mongoose.connect(mongoUri);
-    console.log("Connected to MongoDB");
+  if (process.env.USE_MEMORY_DB === "true") {
     await ensureAdminSeed();
-  } catch (error) {
-    console.error(
-      "Failed to connect to MongoDB:",
-      error instanceof Error ? error.message : error,
-    );
-    process.exit(1);
+  } else {
+    const mongoUri = buildMongoUri();
+
+    if (!mongoUri) {
+      console.warn("No MongoDB configuration found. Set USE_MEMORY_DB=true to use the in-memory store.");
+    } else {
+      try {
+        await mongoose.connect(mongoUri);
+        console.log("Connected to MongoDB");
+        await ensureAdminSeed();
+      } catch (error) {
+        console.error(
+          "error connecting to mongoDB",
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
   }
 
+  // Uruchamiamy serwer niezależnie od tego, czy baza danych działa, czy nie
   app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log(`Health check: http://localhost:${PORT}/api/health`);

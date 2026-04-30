@@ -21,5 +21,17 @@
     >
       Panel Użytkownika
     </a>
+
+    @if (isOrganizer()) {
+      <a routerLink="/organizer" routerLinkActive="is-active" class="nav-link">
+        Panel Organizatora
+      </a>
+    }
+
+    @if (isAdmin()) {
+      <a routerLink="/moderation" routerLinkActive="is-active" class="nav-link">
+        Moderacja
+      </a>
+    }
   </nav>
 </header>

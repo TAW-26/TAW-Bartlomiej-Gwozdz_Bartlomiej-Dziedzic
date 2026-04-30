@@ -1,7 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
 import { ResourceCardComponent } from '../../components/resource-card/resource-card.component';
-import { EVENTS, EventItem } from '../../shared/event-data';
+import { EventItem, EventStatus } from '../../models/api';
+import { EventService } from '../../services/event';
+import { AuthService } from '../../services/auth';
 
 type EventSearchFilters = {
   q: FormControl<string>;
@@ -15,11 +18,15 @@ type EventSearchFilters = {
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [ReactiveFormsModule, ResourceCardComponent],
+  imports: [ReactiveFormsModule, ResourceCardComponent, RouterLink],
   templateUrl: './events.component.html',
-  styleUrl: './events.component.scss',
+  styleUrls: ['./events.component.scss'],
 })
 export class EventsComponent {
+  private readonly eventService = inject(EventService);
+  private readonly route = inject(ActivatedRoute);
+  protected readonly isOrganizer = inject(AuthService).isOrganizer;
+
   protected readonly filters = new FormGroup<EventSearchFilters>({
     q: new FormControl('', { nonNullable: true }),
     city: new FormControl('', { nonNullable: true }),
@@ -29,10 +36,30 @@ export class EventsComponent {
     status: new FormControl('', { nonNullable: true }),
   });
 
-  protected readonly resources: EventItem[] = EVENTS;
+  protected readonly resources = signal<EventItem[]>([]);
 
-  protected submitSearch(): void {
-    const filters = this.filters.getRawValue();
-    console.log('Search filters:', filters);
+  constructor() {
+    this.resources.set((this.route.snapshot.data['events'] as EventItem[] | undefined) ?? []);
+  }
+
+  protected submitSearch(event?: Event): void {
+    event?.preventDefault();
+    this.loadEvents();
+  }
+
+  private loadEvents(): void {
+    const raw = this.filters.getRawValue();
+    this.eventService
+      .getEvents({
+        q: raw.q || undefined,
+        city: raw.city || undefined,
+        category: raw.category || undefined,
+        from: raw.from || undefined,
+        to: raw.to || undefined,
+        status: (raw.status as EventStatus) || undefined,
+      })
+      .subscribe((events) => {
+        this.resources.set(events);
+      });
   }
 }

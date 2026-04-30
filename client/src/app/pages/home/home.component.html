@@ -4,8 +4,15 @@
 
     <div class="hero-actions">
       <a class="action-btn" routerLink="/events">Przeglądaj wydarzenia</a>
-      <a class="action-btn" routerLink="/login">Zaloguj się</a>
-      <button class="action-btn" type="button">Zarejestruj się</button>
+      <a class="action-btn" routerLink="/login" *ngIf="!auth.isLoggedIn()">Zaloguj się</a>
+      <a
+        class="action-btn"
+        routerLink="/login"
+        *ngIf="!auth.isLoggedIn()"
+        [queryParams]="{ mode: 'register' }"
+      >
+        Zarejestruj się
+      </a>
     </div>
   </section>
 </main>

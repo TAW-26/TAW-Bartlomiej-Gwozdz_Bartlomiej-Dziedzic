@@ -12,6 +12,7 @@ import {
   listEventParticipants,
   listEvents,
   listEventsByOrganizer,
+  listEventsByParticipant,
   logModerationAction,
   removeParticipant,
   toSafeEventView,
@@ -248,6 +249,15 @@ export const listOrganizerEvents = async (
   );
 
   return listEventsByOrganizer(actorId);
+};
+
+export const listParticipantEvents = async (
+  actorId: string,
+): Promise<EventView[]> => {
+  const actor = await getUserById(actorId);
+  assert(Boolean(actor), "Actor not found");
+
+  return listEventsByParticipant(actorId);
 };
 
 export const listParticipantsForEvent = async (

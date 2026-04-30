@@ -1,0 +1,177 @@
+<main class="user-wrap">
+  <section class="user-panel organizer-panel">
+    <h2>Panel Organizatora</h2>
+
+    <div class="controls">
+      <button class="action-btn" (click)="loadMyEvents()">Odśwież dane</button>
+      <button class="action-btn create-btn" (click)="toggleCreateForm()">
+        {{ showCreateForm ? 'Anuluj' : '+ Nowe wydarzenie' }}
+      </button>
+    </div>
+
+    <!-- Create form -->
+    <section *ngIf="showCreateForm" class="form-section">
+      <h3>Tworzenie nowego wydarzenia</h3>
+      <form class="event-form" (ngSubmit)="submitCreate()">
+        <div class="form-row">
+          <label>Nazwa *
+            <input type="text" [(ngModel)]="createForm.name" name="name" required />
+          </label>
+          <label>Kategoria *
+            <input type="text" [(ngModel)]="createForm.category" name="category" required />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Miasto *
+            <input type="text" [(ngModel)]="createForm.city" name="city" required />
+          </label>
+          <label>Lokalizacja *
+            <input type="text" [(ngModel)]="createForm.location" name="location" required />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Data rozpoczęcia *
+            <input type="datetime-local" [(ngModel)]="createForm.startsAt" name="startsAt" required />
+          </label>
+          <label>Data zakończenia *
+            <input type="datetime-local" [(ngModel)]="createForm.endsAt" name="endsAt" required />
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Maks. uczestników
+            <input type="number" [(ngModel)]="createForm.maxParticipants" name="maxParticipants" min="1" />
+          </label>
+          <label>Status
+            <select [(ngModel)]="createForm.status" name="status">
+              <option value="open">Otwarte</option>
+              <option value="closed">Zamknięte</option>
+            </select>
+          </label>
+        </div>
+        <label class="full-width">URL obrazka
+          <input type="url" [(ngModel)]="createForm.imageUrl" name="imageUrl" />
+        </label>
+        <label class="full-width">Opis *
+          <textarea [(ngModel)]="createForm.description" name="description" rows="4" required></textarea>
+        </label>
+        <div class="form-actions">
+          <button class="action-btn create-btn" type="submit" [disabled]="createLoading">
+            {{ createLoading ? 'Tworzenie…' : 'Utwórz wydarzenie' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <p *ngIf="loading" class="info-text">Ładowanie wydarzeń…</p>
+    <p *ngIf="createLoading && !loading" class="info-text syncing-text">Zapisywanie wydarzenia…</p>
+    <p *ngIf="error" class="error">Błąd: {{ error }}</p>
+    <p *ngIf="!loading && !error && events.length === 0" class="info-text">
+      Nie masz jeszcze żadnych wydarzeń.
+    </p>
+
+    <!-- Events list -->
+    <section *ngIf="events.length > 0" class="events-manage">
+      <h3>Twoje wydarzenia ({{ events.length }})</h3>
+
+      <ul class="events-list">
+        <li *ngFor="let event of events" class="event-item organizer-event-item" [class.is-pending]="pendingIds.has(event.id)">
+
+          <!-- View mode -->
+          <ng-container *ngIf="editingEventId !== event.id">
+            <div class="info">
+              <div><strong>{{ event.name }}</strong></div>
+              <div class="meta">{{ event.category }} · {{ event.city }} · {{ event.location }}</div>
+              <div class="meta">
+                {{ event.startsAt | date:'dd.MM.yyyy HH:mm' }} –
+                {{ event.endsAt | date:'dd.MM.yyyy HH:mm' }}
+              </div>
+              <div class="meta">
+                Status: <strong>{{ event.status === 'open' ? 'Otwarte' : 'Zamknięte' }}</strong>
+                · Uczestnicy: {{ event.participantsCount }}
+                <span *ngIf="event.maxParticipants"> / {{ event.maxParticipants }}</span>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="action-btn" (click)="startEdit(event)">Edytuj</button>
+              <button class="action-btn participants-btn" (click)="toggleParticipants(event.id)">
+                {{ expandedParticipants[event.id] ? 'Ukryj uczestników' : 'Uczestnicy' }}
+              </button>
+              <button class="action-btn danger-btn" (click)="deleteEvent(event.id)">Usuń</button>
+            </div>
+          </ng-container>
+
+          <!-- Edit mode -->
+          <ng-container *ngIf="editingEventId === event.id">
+            <form class="event-form inline-edit-form" (ngSubmit)="submitEdit(event.id)">
+              <div class="form-row">
+                <label>Nazwa
+                  <input type="text" [(ngModel)]="editForm.name" name="eName" required />
+                </label>
+                <label>Kategoria
+                  <input type="text" [(ngModel)]="editForm.category" name="eCategory" />
+                </label>
+              </div>
+              <div class="form-row">
+                <label>Miasto
+                  <input type="text" [(ngModel)]="editForm.city" name="eCity" />
+                </label>
+                <label>Lokalizacja
+                  <input type="text" [(ngModel)]="editForm.location" name="eLocation" />
+                </label>
+              </div>
+              <div class="form-row">
+                <label>Data rozpoczęcia
+                  <input type="datetime-local" [(ngModel)]="editForm.startsAt" name="eStartsAt" />
+                </label>
+                <label>Data zakończenia
+                  <input type="datetime-local" [(ngModel)]="editForm.endsAt" name="eEndsAt" />
+                </label>
+              </div>
+              <div class="form-row">
+                <label>Maks. uczestników
+                  <input type="number" [(ngModel)]="editForm.maxParticipants" name="eMax" min="1" />
+                </label>
+                <label>Status
+                  <select [(ngModel)]="editForm.status" name="eStatus">
+                    <option value="open">Otwarte</option>
+                    <option value="closed">Zamknięte</option>
+                  </select>
+                </label>
+              </div>
+              <label class="full-width">URL obrazka
+                <input type="url" [(ngModel)]="editForm.imageUrl" name="eImageUrl" />
+              </label>
+              <label class="full-width">Opis
+                <textarea [(ngModel)]="editForm.description" name="eDescription" rows="3"></textarea>
+              </label>
+              <div class="form-actions">
+                <button class="action-btn create-btn" type="submit">Zapisz</button>
+                <button class="action-btn" type="button" (click)="cancelEdit()">Anuluj</button>
+              </div>
+            </form>
+          </ng-container>
+
+          <!-- Participants panel -->
+          <div *ngIf="expandedParticipants[event.id]" class="participants-section">
+            <p *ngIf="loadingParticipants[event.id]" class="info-text">Ładowanie uczestników…</p>
+            <p *ngIf="!loadingParticipants[event.id] && participantsMap[event.id]?.length === 0" class="info-text">
+              Brak uczestników.
+            </p>
+            <ul *ngIf="(participantsMap[event.id]?.length ?? 0) > 0" class="participants-list">
+              <li *ngFor="let p of participantsMap[event.id]" class="participant-item">
+                <div class="info">
+                  <div><strong>{{ p.fullName }}</strong></div>
+                  <div class="meta">{{ p.email }} · Dołączył: {{ p.joinedAt | date:'dd.MM.yyyy HH:mm' }}</div>
+                </div>
+                <button class="action-btn danger-btn small-btn" (click)="removeParticipant(event.id, p.userId)">
+                  Usuń
+                </button>
+              </li>
+            </ul>
+          </div>
+
+        </li>
+      </ul>
+    </section>
+  </section>
+</main>
