@@ -24,6 +24,7 @@ export class UserComponent {
   private readonly userService = inject(UserService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  protected readonly placeholderImage = '/event-placeholder.svg';
 
   protected readonly user = this.auth.currentUser;
   protected readonly isOrganizer = this.auth.isOrganizer;
@@ -77,6 +78,13 @@ export class UserComponent {
   protected logout(): void {
     this.auth.logout();
     void this.router.navigate(['/user']);
+  }
+
+  protected onImageError(event: Event): void {
+    const image = event.target as HTMLImageElement | null;
+    if (image && image.src !== this.placeholderImage) {
+      image.src = this.placeholderImage;
+    }
   }
 
   private loadJoinedEvents(): void {

@@ -18,10 +18,15 @@
         <div class="notification-list">
           @for (event of countdownEvents; track event.id) {
             <article class="notice-item">
-              <div class="event-thumb" aria-hidden="true">
-                <span class="thumb-sun"></span>
-                <span class="thumb-mountain-left"></span>
-                <span class="thumb-mountain-right"></span>
+              <div class="event-thumb">
+                <img
+                  class="thumb-image"
+                  [src]="event.imageUrl || placeholderImage"
+                  [alt]="'Grafika wydarzenia: ' + event.name"
+                  loading="lazy"
+                  decoding="async"
+                  (error)="onImageError($event)"
+                />
               </div>
 
               <div class="notice-copy">
