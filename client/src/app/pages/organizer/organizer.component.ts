@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { EventService } from '../../services/event';
+import { NotificationService } from '../../services/notification';
 import { CreateEventPayload, EventItem, Participant, UpdateEventPayload } from '../../models/api';
 
 @Component({
@@ -14,6 +15,7 @@ import { CreateEventPayload, EventItem, Participant, UpdateEventPayload } from '
 })
 export class OrganizerComponent {
   private readonly eventService = inject(EventService);
+  private readonly notificationService = inject(NotificationService);
 
   readonly events = signal<EventItem[]>([]);
   readonly loading = signal(false);
@@ -45,7 +47,9 @@ export class OrganizerComponent {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (ev) => this.events.set(ev),
-        error: (err) => this.error.set(err?.message ?? String(err)),
+        error: (err) => {
+          this.error.set('Nie udało się załadować twoich wydarzeń.');
+        },
       });
   }
 
@@ -68,10 +72,13 @@ export class OrganizerComponent {
       .createEvent(payload)
       .pipe(finalize(() => this.createLoading.set(false)))
       .subscribe({
-        next: (ev) => this.events.update((list) => [ev, ...list]),
+        next: (ev) => {
+          this.events.update((list) => [ev, ...list]);
+          this.notificationService.success('Wydarzenie zostało utworzone!');
+        },
         error: (err) => {
           this.showCreateForm.set(true);
-          alert('Błąd tworzenia: ' + (err?.message ?? err));
+          this.notificationService.error('Nie udało się utworzyć wydarzenia.');
         },
       });
   }
@@ -128,12 +135,15 @@ export class OrganizerComponent {
         ),
       )
       .subscribe({
-        next: (updated) => this.events.update((ev) => ev.map((e) => (e.id === id ? updated : e))),
+        next: (updated) => {
+          this.events.update((ev) => ev.map((e) => (e.id === id ? updated : e)));
+          this.notificationService.success('Wydarzenie zostało zaktualizowane!');
+        },
         error: (err) => {
           if (snapshot && idx >= 0)
             this.events.update((ev) => ev.map((e, i) => (i === idx ? snapshot : e)));
           this.editingEventId.set(id);
-          alert('Błąd edycji: ' + (err?.message ?? err));
+          this.notificationService.error('Nie udało się zaktualizować wydarzenia.');
         },
       });
   }
@@ -143,9 +153,12 @@ export class OrganizerComponent {
     const saved = this.events();
     this.events.update((list) => list.filter((e) => e.id !== id));
     this.eventService.deleteEvent(id).subscribe({
+      next: () => {
+        this.notificationService.success('Wydarzenie zostało usunięte.');
+      },
       error: (err) => {
         this.events.set(saved);
-        alert('Błąd podczas usuwania: ' + (err?.message ?? err));
+        this.notificationService.error('Nie udało się usunąć wydarzenia.');
       },
     });
   }
@@ -165,7 +178,9 @@ export class OrganizerComponent {
       .pipe(finalize(() => this.loadingParticipants.update((m) => ({ ...m, [eventId]: false }))))
       .subscribe({
         next: (list) => this.participantsMap.update((m) => ({ ...m, [eventId]: list })),
-        error: (err) => alert('Błąd ładowania uczestników: ' + (err?.message ?? err)),
+        error: (err) => {
+          this.notificationService.error('Nie udało się załadować uczestników.');
+        },
       });
   }
 
@@ -182,8 +197,11 @@ export class OrganizerComponent {
             e.id === eventId ? { ...e, participantsCount: e.participantsCount - 1 } : e,
           ),
         );
+        this.notificationService.success('Uczestnik został usunięty.');
       },
-      error: (err) => alert('Błąd podczas usuwania uczestnika: ' + (err?.message ?? err)),
+      error: (err) => {
+        this.notificationService.error('Nie udało się usunąć uczestnika.');
+      },
     });
   }
 
