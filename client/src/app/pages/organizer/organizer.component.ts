@@ -1,14 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { EventService } from '../../services/event';
-import {
-  CreateEventPayload,
-  EventItem,
-  Participant,
-  UpdateEventPayload,
-} from '../../models/api';
+import { CreateEventPayload, EventItem, Participant, UpdateEventPayload } from '../../models/api';
 
 @Component({
   selector: 'app-organizer',
@@ -17,72 +12,73 @@ import {
   templateUrl: './organizer.component.html',
   styleUrls: ['./organizer.component.scss'],
 })
-export class OrganizerComponent implements OnInit {
-  events: EventItem[] = [];
-  loading = false;
-  error: string | null = null;
+export class OrganizerComponent {
+  private readonly eventService = inject(EventService);
 
-  participantsMap: Record<string, Participant[]> = {};
-  loadingParticipants: Record<string, boolean> = {};
-  expandedParticipants: Record<string, boolean> = {};
+  readonly events = signal<EventItem[]>([]);
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
 
-  editingEventId: string | null = null;
-  editForm: UpdateEventPayload = {};
+  readonly participantsMap = signal<Record<string, Participant[]>>({});
+  readonly loadingParticipants = signal<Record<string, boolean>>({});
+  readonly expandedParticipants = signal<Record<string, boolean>>({});
 
-  showCreateForm = false;
-  createLoading = false;
-  createForm: CreateEventPayload = this.emptyCreateForm();
-  readonly pendingIds = new Set<string>();
+  readonly editingEventId = signal<string | null>(null);
+  readonly editForm = signal<UpdateEventPayload>({});
 
-  constructor(private readonly eventService: EventService) {}
+  readonly showCreateForm = signal(false);
+  readonly createLoading = signal(false);
+  readonly createForm = signal<CreateEventPayload>(this.emptyCreateForm());
+  readonly pendingIds = signal<Set<string>>(new Set());
 
-  ngOnInit(): void {
+  readonly isLoading = computed(() => this.loading() || this.createLoading());
+
+  constructor() {
     this.loadMyEvents();
   }
 
   loadMyEvents(): void {
-    this.loading = true;
-    this.error = null;
+    this.loading.set(true);
+    this.error.set(null);
     this.eventService
       .getMyEvents()
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (ev) => (this.events = ev),
-        error: (err) => (this.error = err?.message ?? String(err)),
+        next: (ev) => this.events.set(ev),
+        error: (err) => this.error.set(err?.message ?? String(err)),
       });
   }
 
   toggleCreateForm(): void {
-    this.showCreateForm = !this.showCreateForm;
-    if (!this.showCreateForm) this.createForm = this.emptyCreateForm();
+    const next = !this.showCreateForm();
+    this.showCreateForm.set(next);
+    if (!next) this.createForm.set(this.emptyCreateForm());
   }
 
   submitCreate(): void {
     const payload: CreateEventPayload = {
-      ...this.createForm,
-      startsAt: this.toISO(this.createForm.startsAt),
-      endsAt: this.toISO(this.createForm.endsAt),
+      ...this.createForm(),
+      startsAt: this.toISO(this.createForm().startsAt),
+      endsAt: this.toISO(this.createForm().endsAt),
     };
-    this.showCreateForm = false;
-    this.createForm = this.emptyCreateForm();
-    this.createLoading = true;
+    this.showCreateForm.set(false);
+    this.createForm.set(this.emptyCreateForm());
+    this.createLoading.set(true);
     this.eventService
       .createEvent(payload)
-      .pipe(finalize(() => (this.createLoading = false)))
+      .pipe(finalize(() => this.createLoading.set(false)))
       .subscribe({
-        next: (ev) => {
-          this.events = [ev, ...this.events];
-        },
+        next: (ev) => this.events.update((list) => [ev, ...list]),
         error: (err) => {
-          this.showCreateForm = true;
+          this.showCreateForm.set(true);
           alert('Błąd tworzenia: ' + (err?.message ?? err));
         },
       });
   }
 
   startEdit(event: EventItem): void {
-    this.editingEventId = event.id;
-    this.editForm = {
+    this.editingEventId.set(event.id);
+    this.editForm.set({
       name: event.name,
       description: event.description,
       city: event.city,
@@ -93,69 +89,82 @@ export class OrganizerComponent implements OnInit {
       maxParticipants: event.maxParticipants,
       imageUrl: event.imageUrl ?? '',
       status: event.status,
-    };
+    });
   }
 
   cancelEdit(): void {
-    this.editingEventId = null;
-    this.editForm = {};
+    this.editingEventId.set(null);
+    this.editForm.set({});
   }
 
   submitEdit(id: string): void {
+    const form = this.editForm();
     const payload: UpdateEventPayload = {
-      ...this.editForm,
-      startsAt: this.editForm.startsAt ? this.toISO(this.editForm.startsAt) : undefined,
-      endsAt: this.editForm.endsAt ? this.toISO(this.editForm.endsAt) : undefined,
+      ...form,
+      startsAt: form.startsAt ? this.toISO(form.startsAt) : undefined,
+      endsAt: form.endsAt ? this.toISO(form.endsAt) : undefined,
     };
-    const idx = this.events.findIndex((e) => e.id === id);
-    const snapshot = idx >= 0 ? { ...this.events[idx] } : null;
-    if (idx >= 0) {
-      this.events = this.events.map((e) =>
-        e.id === id ? { ...e, ...(payload as Partial<EventItem>) } : e,
-      );
-    }
-    this.editingEventId = null;
-    this.pendingIds.add(id);
-    this.eventService.updateEvent(id, payload).pipe(finalize(() => this.pendingIds.delete(id))).subscribe({
-      next: (updated) => {
-        const i = this.events.findIndex((e) => e.id === id);
-        if (i >= 0) this.events[i] = updated;
-      },
-      error: (err) => {
-        if (snapshot && idx >= 0) this.events[idx] = snapshot;
-        this.editingEventId = id;
-        alert('Błąd edycji: ' + (err?.message ?? err));
-      },
+    const list = this.events();
+    const idx = list.findIndex((e) => e.id === id);
+    const snapshot = idx >= 0 ? { ...list[idx] } : null;
+
+    this.events.update((ev) =>
+      ev.map((e) => (e.id === id ? { ...e, ...(payload as Partial<EventItem>) } : e)),
+    );
+    this.editingEventId.set(null);
+    this.pendingIds.update((s) => {
+      s.add(id);
+      return new Set(s);
     });
+
+    this.eventService
+      .updateEvent(id, payload)
+      .pipe(
+        finalize(() =>
+          this.pendingIds.update((s) => {
+            s.delete(id);
+            return new Set(s);
+          }),
+        ),
+      )
+      .subscribe({
+        next: (updated) => this.events.update((ev) => ev.map((e) => (e.id === id ? updated : e))),
+        error: (err) => {
+          if (snapshot && idx >= 0)
+            this.events.update((ev) => ev.map((e, i) => (i === idx ? snapshot : e)));
+          this.editingEventId.set(id);
+          alert('Błąd edycji: ' + (err?.message ?? err));
+        },
+      });
   }
 
   deleteEvent(id: string): void {
     if (!confirm('Na pewno usunąć to wydarzenie? Operacja jest nieodwracalna.')) return;
-    const saved = [...this.events];
-    this.events = this.events.filter((e) => e.id !== id);
+    const saved = this.events();
+    this.events.update((list) => list.filter((e) => e.id !== id));
     this.eventService.deleteEvent(id).subscribe({
       error: (err) => {
-        this.events = saved;
+        this.events.set(saved);
         alert('Błąd podczas usuwania: ' + (err?.message ?? err));
       },
     });
   }
 
   toggleParticipants(eventId: string): void {
-    const wasExpanded = this.expandedParticipants[eventId];
-    this.expandedParticipants[eventId] = !wasExpanded;
-    if (!wasExpanded && !this.participantsMap[eventId]) {
+    const wasExpanded = this.expandedParticipants()[eventId];
+    this.expandedParticipants.update((m) => ({ ...m, [eventId]: !wasExpanded }));
+    if (!wasExpanded && !this.participantsMap()[eventId]) {
       this.loadParticipants(eventId);
     }
   }
 
   loadParticipants(eventId: string): void {
-    this.loadingParticipants[eventId] = true;
+    this.loadingParticipants.update((m) => ({ ...m, [eventId]: true }));
     this.eventService
       .getParticipants(eventId)
-      .pipe(finalize(() => (this.loadingParticipants[eventId] = false)))
+      .pipe(finalize(() => this.loadingParticipants.update((m) => ({ ...m, [eventId]: false }))))
       .subscribe({
-        next: (list) => (this.participantsMap[eventId] = list),
+        next: (list) => this.participantsMap.update((m) => ({ ...m, [eventId]: list })),
         error: (err) => alert('Błąd ładowania uczestników: ' + (err?.message ?? err)),
       });
   }
@@ -164,15 +173,15 @@ export class OrganizerComponent implements OnInit {
     if (!confirm('Usunąć uczestnika z wydarzenia?')) return;
     this.eventService.removeParticipant(eventId, userId).subscribe({
       next: () => {
-        this.participantsMap[eventId] = this.participantsMap[eventId].filter(
-          (p) => p.userId !== userId,
+        this.participantsMap.update((m) => ({
+          ...m,
+          [eventId]: m[eventId].filter((p) => p.userId !== userId),
+        }));
+        this.events.update((list) =>
+          list.map((e) =>
+            e.id === eventId ? { ...e, participantsCount: e.participantsCount - 1 } : e,
+          ),
         );
-        const idx = this.events.findIndex((e) => e.id === eventId);
-        if (idx >= 0)
-          this.events[idx] = {
-            ...this.events[idx],
-            participantsCount: this.events[idx].participantsCount - 1,
-          };
       },
       error: (err) => alert('Błąd podczas usuwania uczestnika: ' + (err?.message ?? err)),
     });

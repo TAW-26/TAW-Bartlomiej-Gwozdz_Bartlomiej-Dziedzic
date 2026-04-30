@@ -46,7 +46,10 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: transform 140ms ease, filter 140ms ease, box-shadow 140ms ease;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease,
+    box-shadow 140ms ease;
 
   &:hover:not(:disabled) {
     filter: brightness(1.15);
@@ -254,5 +257,29 @@ textarea {
   .organizer-event-item .actions {
     flex-direction: row;
     flex-wrap: wrap;
+  }
+}
+.spinner-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0 32px;
+
+  &--sm {
+    padding: 16px 0;
+  }
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(161, 199, 255, 0.15);
+  border-top-color: rgba(161, 199, 255, 0.85);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }

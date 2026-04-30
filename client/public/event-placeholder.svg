@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title desc">
+  <title id="title">Brak obrazka wydarzenia</title>
+  <desc id="desc">Grafika zastępcza przedstawiająca krajobraz i ikonę zdjęcia.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d9e5f8" />
+      <stop offset="100%" stop-color="#a8bfd9" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)" />
+  <circle cx="170" cy="120" r="48" fill="#f4d27a" />
+  <path d="M0 430 L220 230 L360 360 L520 190 L800 430 Z" fill="#5f8fb8" />
+  <rect x="250" y="130" width="300" height="200" rx="16" fill="none" stroke="#2e4a66" stroke-width="14" />
+  <circle cx="330" cy="200" r="26" fill="#2e4a66" />
+  <path d="M290 300 L390 220 L500 300 Z" fill="#2e4a66" />
+  <text x="400" y="395" text-anchor="middle" font-family="Trebuchet MS, Segoe UI, Tahoma, sans-serif" font-size="34" fill="#1f3348">
+    Brak obrazu wydarzenia
+  </text>
+</svg>
