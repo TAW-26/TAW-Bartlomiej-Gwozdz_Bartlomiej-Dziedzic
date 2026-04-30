@@ -5,6 +5,8 @@ import { ResourceCardComponent } from '../../components/resource-card/resource-c
 import { EventItem, EventStatus } from '../../models/api';
 import { EventService } from '../../services/event';
 import { AuthService } from '../../services/auth';
+import { NotificationService } from '../../services/notification';
+import { finalize } from 'rxjs/operators';
 
 type EventSearchFilters = {
   q: FormControl<string>;
@@ -25,6 +27,7 @@ type EventSearchFilters = {
 export class EventsComponent {
   private readonly eventService = inject(EventService);
   private readonly route = inject(ActivatedRoute);
+  private readonly notificationService = inject(NotificationService);
   protected readonly isOrganizer = inject(AuthService).isOrganizer;
 
   protected readonly filters = new FormGroup<EventSearchFilters>({
@@ -37,6 +40,8 @@ export class EventsComponent {
   });
 
   protected readonly resources = signal<EventItem[]>([]);
+  protected readonly loading = signal(false);
+  protected readonly error = signal<string | null>(null);
 
   constructor() {
     this.resources.set((this.route.snapshot.data['events'] as EventItem[] | undefined) ?? []);
@@ -49,6 +54,8 @@ export class EventsComponent {
 
   private loadEvents(): void {
     const raw = this.filters.getRawValue();
+    this.loading.set(true);
+    this.error.set(null);
     this.eventService
       .getEvents({
         q: raw.q || undefined,
@@ -58,8 +65,17 @@ export class EventsComponent {
         to: raw.to || undefined,
         status: (raw.status as EventStatus) || undefined,
       })
-      .subscribe((events) => {
-        this.resources.set(events);
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (events) => {
+          this.resources.set(events);
+          if (events.length === 0) {
+            this.notificationService.info('Brak wydarzeń spełniających kryteria wyszukiwania.');
+          }
+        },
+        error: (err: any) => {
+          this.error.set('Nie udało się załadować wydarzeń.');
+        },
       });
   }
 }

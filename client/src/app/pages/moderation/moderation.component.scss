@@ -1,11 +1,9 @@
 .moderation-panel {
-  /* Use same spacing as user panel */
   padding: 20px 24px 28px;
   display: grid;
   gap: 12px;
 }
 
-/* Wrapper to match user panel layout */
 .user-wrap {
   width: 100%;
   display: grid;
@@ -47,13 +45,14 @@
   display: grid;
   gap: 12px;
 }
+
 .event-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 14px 16px;
   border-radius: 12px;
-  background: #1b4277; /* match resource-card */
+  background: #1b4277;
   color: #f6f8fc;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06);
 }
@@ -68,7 +67,6 @@
   font-size: 14px;
 }
 
-/* Reuse user panel button styles look */
 .logout-btn {
   margin-top: 18px;
   border: 2px solid #07101d;
@@ -117,7 +115,6 @@
   margin-right: 8px;
   padding: 8px 10px 10px;
   border-radius: 8px;
-  /* higher-contrast, solid background for better readability */
   background: linear-gradient(180deg, #16315a 0%, #122646 100%);
   color: #ffffff;
   font-weight: 600;
@@ -127,7 +124,6 @@
   appearance: none;
 }
 
-/* Improve readability of native dropdown options where supported */
 .users-list .user-item .actions select option {
   background: #f5f1e5;
   color: #111827;
@@ -135,7 +131,6 @@
   padding: 6px 8px;
 }
 
-/* Fallback for dark-theme browsers: dark option background with white text */
 @media (prefers-color-scheme: dark) {
   .users-list .user-item .actions select option {
     background: #122646;
@@ -152,7 +147,53 @@
   .event-item .info {
     min-width: 0;
   }
+
   .event-item {
     gap: 8px;
   }
+}
+
+/* Spinner */
+.spinner-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0 32px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(161, 199, 255, 0.15);
+  border-top-color: rgba(161, 199, 255, 0.85);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Stany przycisków i list */
+.logout-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+}
+
+.empty-state {
+  color: rgba(240, 244, 251, 0.5);
+  font-size: 14px;
+  text-align: center;
+  padding: 20px 0;
+  list-style: none;
+}
+
+.error {
+  color: #f87171;
+  font-size: 14px;
+  text-align: center;
+  margin: 0;
 }

@@ -2,11 +2,15 @@
   <main class="details-wrap">
     <section class="details-panel">
       <div class="details-top">
-        <div class="details-image" aria-hidden="true">
-          <div class="details-image-frame"></div>
-          <span class="details-sun"></span>
-          <span class="details-mountain details-mountain-left"></span>
-          <span class="details-mountain details-mountain-right"></span>
+        <div class="details-image">
+          <img
+            class="details-image-content"
+            [src]="currentEvent.imageUrl || placeholderImage"
+            [alt]="'Grafika wydarzenia: ' + currentEvent.name"
+            loading="eager"
+            decoding="async"
+            (error)="onImageError($event)"
+          />
         </div>
 
         <div class="details-meta">
