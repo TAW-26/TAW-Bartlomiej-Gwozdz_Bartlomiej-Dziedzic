@@ -10,22 +10,6 @@
     <p class="profile-line">{{ roleLabel }}</p>
 
     <button class="logout-btn" type="button" (click)="logout()">Wyloguj się</button>
-    <button
-      *ngIf="isOrganizer()"
-      class="admin-btn"
-      type="button"
-      (click)="goToOrganizer()"
-    >
-      Panel Organizatora
-    </button>
-    <button
-      *ngIf="user()?.role === 'admin'"
-      class="admin-btn"
-      type="button"
-      (click)="goToModeration()"
-    >
-      Panel Moderacji
-    </button>
 
     <section class="notifications" aria-label="Powiadomienia">
       <h2>Powiadomienia</h2>
