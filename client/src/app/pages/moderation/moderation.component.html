@@ -1,0 +1,81 @@
+<main class="user-wrap">
+  <section class="user-panel moderation-panel">
+    <h2>Panel moderacji</h2>
+
+    <div class="controls">
+      <button class="logout-btn" (click)="refreshData()" [disabled]="isLoading()">
+        Odśwież dane
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <div class="spinner-wrap">
+        <div class="spinner"></div>
+      </div>
+    }
+
+    @if (errorEvents()) {
+      <p class="error">Błąd wydarzeń: {{ errorEvents() }}</p>
+    }
+
+    @if (errorUsers()) {
+      <p class="error">Błąd użytkowników: {{ errorUsers() }}</p>
+    }
+
+    @if (!isLoading()) {
+      <section class="events-manage">
+        <h3>Wydarzenia do moderacji</h3>
+
+        <ul class="events-list moderation-events-list">
+          @for (event of events(); track event.id) {
+            <li class="event-item moderation-event-item">
+              <div class="info">
+                <div>
+                  <strong>{{ event.name }}</strong>
+                </div>
+                <div class="meta">{{ event.category }} · {{ event.city }}</div>
+                <div class="meta">{{ event.location }}</div>
+                <div class="meta">
+                  {{ event.startsAt }} - {{ event.endsAt }} · {{ event.status }} · Uczestnicy:
+                  {{ event.participantsCount }}
+                </div>
+              </div>
+              <div class="actions">
+                <button class="logout-btn" (click)="removeEvent(event.id)">Usuń wydarzenie</button>
+              </div>
+            </li>
+          } @empty {
+            <li class="empty-state">Brak wydarzeń do moderacji.</li>
+          }
+        </ul>
+      </section>
+
+      <section class="users-manage">
+        <h3>Zarządzanie użytkownikami</h3>
+
+        <ul class="events-list users-list">
+          @for (u of users(); track u.id) {
+            <li class="event-item user-item">
+              <div class="info">
+                <div>
+                  <strong>{{ u.fullName }}</strong>
+                </div>
+                <div class="meta">{{ u.email }}</div>
+              </div>
+              <div class="actions">
+                <select [value]="u.role" (change)="changeUserRole(u.id, $any($event.target).value)">
+                  <option value="user">Użytkownik</option>
+                  <option value="organizer">Organizator</option>
+                  <option value="admin">Administrator</option>
+                </select>
+                <button class="logout-btn" (click)="deleteUser(u.id)">Usuń</button>
+              </div>
+            </li>
+          } @empty {
+            <li class="empty-state">Brak użytkowników.</li>
+          }
+        </ul>
+      </section>
+    }
+  </section>
+</main>

@@ -87,6 +87,31 @@
   filter: brightness(1.06);
 }
 
+.organizer-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.organizer-actions a {
+  display: inline-block;
+  border: 2px solid #0a1f12;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #1a5c32 0%, #144228 100%);
+  color: #e9efff;
+  font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 8px 18px 10px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 140ms ease;
+
+  &:hover {
+    filter: brightness(1.15);
+  }
+}
+
 .events-list {
   margin-top: 74px;
   display: grid;
@@ -110,4 +135,37 @@
   .search-submit {
     width: 100%;
   }
+}
+.spinner-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 56px 0 40px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(161, 199, 255, 0.15);
+  border-top-color: rgba(161, 199, 255, 0.85);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.empty-state {
+  color: rgba(238, 245, 255, 0.5);
+  font-size: 15px;
+  text-align: center;
+  padding: 32px 0;
+}
+
+.search-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
 }

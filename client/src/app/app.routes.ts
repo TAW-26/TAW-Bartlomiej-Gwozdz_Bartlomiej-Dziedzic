@@ -3,7 +3,9 @@ import { HomeComponent } from './pages/home/home.component';
 import { UserComponent } from './pages/user/user.component';
 import { EventsComponent } from './pages/events/events.component';
 import { EventDetailsComponent } from './pages/event-details/event-details.component';
-import { LoginComponent } from './pages/login/login.component';
+import { ModerationComponent } from './pages/moderation/moderation.component';
+import { OrganizerComponent } from './pages/organizer/organizer.component';
+import { eventsResolver } from './pages/events/events.resolver';
 
 export const routes: Routes = [
   {
@@ -12,11 +14,15 @@ export const routes: Routes = [
   },
   {
     path: 'login',
-    component: LoginComponent,
+    redirectTo: 'user',
+    pathMatch: 'full',
   },
   {
     path: 'events',
     component: EventsComponent,
+    resolve: {
+      events: eventsResolver,
+    },
   },
   {
     path: 'events/:id',
@@ -25,5 +31,13 @@ export const routes: Routes = [
   {
     path: 'user',
     component: UserComponent,
+  },
+  {
+    path: 'organizer',
+    component: OrganizerComponent,
+  },
+  {
+    path: 'moderation',
+    component: ModerationComponent,
   },
 ];

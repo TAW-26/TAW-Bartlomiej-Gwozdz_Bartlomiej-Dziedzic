@@ -3,20 +3,24 @@
   [routerLink]="['/events', resource.id]"
   aria-label="Otwórz szczegóły wydarzenia"
 >
-  <div class="resource-thumb" aria-hidden="true">
-    <div class="resource-frame"></div>
-    <span class="resource-sun"></span>
-    <span class="resource-peak resource-peak-left"></span>
-    <span class="resource-peak resource-peak-right"></span>
+  <div class="resource-thumb">
+    <img
+      class="resource-image"
+      [src]="resource.imageUrl || placeholderImage"
+      [alt]="'Grafika wydarzenia: ' + resource.name"
+      loading="lazy"
+      decoding="async"
+      (error)="onImageError($event)"
+    />
   </div>
 
   <div class="resource-content">
-    <h3>{{ resource.title }}</h3>
-    <p>{{ resource.categories }}</p>
+    <h3>{{ resource.name }}</h3>
+    <p>{{ resource.category }}</p>
     <p>{{ resource.city }}</p>
     <p>{{ resource.location }}</p>
-    <p>{{ resource.startAt }}</p>
-    <p>{{ resource.endAt }}</p>
+    <p>{{ resource.startsAt }}</p>
+    <p>{{ resource.endsAt }}</p>
     <p>{{ resource.status }}</p>
   </div>
 

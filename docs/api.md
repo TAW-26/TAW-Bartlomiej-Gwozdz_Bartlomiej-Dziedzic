@@ -428,7 +428,31 @@ http://localhost:3000/api/users
 - Wybierz opcję bearer token z listy
 - Wklej token z logowania admina
 
-### 16) Zmiana roli użytkownika
+### 16) Lista wydarzeń zalogowanego użytkownika
+
+(Wymaga zalogowanego użytkownika.)
+
+**Metoda:**
+
+```
+GET
+```
+
+**URL:**
+
+```
+http://localhost:3000/api/users/me/events
+```
+
+**Oczekiwana odpowiedź:** lista wydarzeń, do których użytkownik już dołączył. Każdy element ma taki sam format jak `GET /api/events`.
+
+**Autoryzacja:**
+
+- Otwórz zakładkę Authorization w Postman w parametrach zapytania
+- Wybierz opcję bearer token z listy
+- Wklej token z logowania użytkownika
+
+### 17) Zmiana roli użytkownika
 
 (Wymaga roli `admin`.)
 
@@ -458,7 +482,7 @@ http://localhost:3000/api/users/{id_użytkownika}/role
 - Wybierz opcję bearer token z listy
 - Wklej token z logowania admina
 
-### 17) Usunięcie użytkownika
+### 18) Usunięcie użytkownika
 
 (Wymaga roli `admin`.)
 
@@ -480,7 +504,7 @@ http://localhost:3000/api/users/{id_użytkownika}
 - Wybierz opcję bearer token z listy
 - Wklej token z logowania admina
 
-### 18) Moderacja usunięcia wydarzenia
+### 19) Moderacja usunięcia wydarzenia
 
 (Wymaga roli `admin`.)
 
