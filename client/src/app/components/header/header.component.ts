@@ -12,4 +12,5 @@ import { AuthService } from '../../services/auth';
 export class HeaderComponent {
   private readonly auth = inject(AuthService);
   readonly isAdmin = this.auth.isAdmin;
+  readonly isOrganizer = this.auth.isOrganizer;
 }

@@ -257,6 +257,18 @@ app.get("/api/users", auth_middleware_1.authenticateJWT, (0, auth_middleware_1.r
         });
     }
 });
+// GET /api/users/me/events - lista wydarzen, do ktorych dolaczyl zalogowany uzytkownik
+app.get("/api/users/me/events", auth_middleware_1.authenticateJWT, async (req, res) => {
+    try {
+        const events = await (0, businessLogic_1.listParticipantEvents)(req.user.id);
+        return res.json(events);
+    }
+    catch (error) {
+        return res.status(403).json({
+            error: error instanceof Error ? error.message : "Access denied",
+        });
+    }
+});
 // PUT /api/users/:id/role - zmiana roli uzytkownika (tylko admin)
 app.put("/api/users/:id/role", auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRoles)(["admin"]), async (req, res) => {
     try {
@@ -308,20 +320,26 @@ app.post("/api/moderation/remove-event", auth_middleware_1.authenticateJWT, (0, 
     }
 });
 const startServer = async () => {
-    const mongoUri = buildMongoUri();
-    if (!mongoUri) {
-        console.error("Missing MongoDB configuration. Set server/secrets.json (preferred) or env vars MONGODB_URI / MONGODB_USER + MONGODB_PASSWORD.");
-        process.exit(1);
-    }
-    try {
-        await mongoose_1.default.connect(mongoUri);
-        console.log("Connected to MongoDB");
+    if (process.env.USE_MEMORY_DB === "true") {
         await (0, store_1.ensureAdminSeed)();
     }
-    catch (error) {
-        console.error("Failed to connect to MongoDB:", error instanceof Error ? error.message : error);
-        process.exit(1);
+    else {
+        const mongoUri = buildMongoUri();
+        if (!mongoUri) {
+            console.warn("No MongoDB configuration found. Set USE_MEMORY_DB=true to use the in-memory store.");
+        }
+        else {
+            try {
+                await mongoose_1.default.connect(mongoUri);
+                console.log("Connected to MongoDB");
+                await (0, store_1.ensureAdminSeed)();
+            }
+            catch (error) {
+                console.error("error connecting to mongoDB", error instanceof Error ? error.message : error);
+            }
+        }
     }
+    // Uruchamiamy serwer niezależnie od tego, czy baza danych działa, czy nie
     app.listen(PORT, () => {
         console.log(`Server running at http://localhost:${PORT}`);
         console.log(`Health check: http://localhost:${PORT}/api/health`);

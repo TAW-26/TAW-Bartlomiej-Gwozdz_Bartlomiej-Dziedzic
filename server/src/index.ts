@@ -444,20 +444,24 @@ app.post(
 );
 
 const startServer = async (): Promise<void> => {
-  const mongoUri = buildMongoUri();
-
-  if (!mongoUri) {
-    console.warn("no configurtion of MongoDB.");
+  if (process.env.USE_MEMORY_DB === "true") {
+    await ensureAdminSeed();
   } else {
-    try {
-      await mongoose.connect(mongoUri);
-      console.log("Connected to MongoDB");
-      await ensureAdminSeed();
-    } catch (error) {
-      console.error(
-        "error connecting to mongoDB",
-        error instanceof Error ? error.message : error,
-      );
+    const mongoUri = buildMongoUri();
+
+    if (!mongoUri) {
+      console.warn("No MongoDB configuration found. Set USE_MEMORY_DB=true to use the in-memory store.");
+    } else {
+      try {
+        await mongoose.connect(mongoUri);
+        console.log("Connected to MongoDB");
+        await ensureAdminSeed();
+      } catch (error) {
+        console.error(
+          "error connecting to mongoDB",
+          error instanceof Error ? error.message : error,
+        );
+      }
     }
   }
 

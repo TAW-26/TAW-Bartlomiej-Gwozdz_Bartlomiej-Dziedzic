@@ -68,6 +68,7 @@ export interface CreateEventPayload {
   endsAt: string;
   maxParticipants?: number;
   imageUrl?: string;
+  status?: EventStatus;
 }
 
 export type UpdateEventPayload = Partial<CreateEventPayload>;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.moderateEventRemoval = exports.removeUserByAdmin = exports.changeUserRole = exports.listUsersForAdmin = exports.removeParticipantFromEvent = exports.listParticipantsForEvent = exports.listOrganizerEvents = exports.removeEvent = exports.editOrganizerEvent = exports.createOrganizerEvent = exports.cancelParticipation = exports.confirmParticipation = exports.getEventDetails = exports.browseEvents = exports.loginUser = exports.registerUser = void 0;
+exports.moderateEventRemoval = exports.removeUserByAdmin = exports.changeUserRole = exports.listUsersForAdmin = exports.removeParticipantFromEvent = exports.listParticipantsForEvent = exports.listParticipantEvents = exports.listOrganizerEvents = exports.removeEvent = exports.editOrganizerEvent = exports.createOrganizerEvent = exports.cancelParticipation = exports.confirmParticipation = exports.getEventDetails = exports.browseEvents = exports.loginUser = exports.registerUser = void 0;
 const store_1 = require("./store");
 const normalizeIso = (value) => new Date(value).toISOString();
 const assert = (condition, message) => {
@@ -126,6 +126,12 @@ const listOrganizerEvents = async (actorId) => {
     return (0, store_1.listEventsByOrganizer)(actorId);
 };
 exports.listOrganizerEvents = listOrganizerEvents;
+const listParticipantEvents = async (actorId) => {
+    const actor = await (0, store_1.getUserById)(actorId);
+    assert(Boolean(actor), "Actor not found");
+    return (0, store_1.listEventsByParticipant)(actorId);
+};
+exports.listParticipantEvents = listParticipantEvents;
 const listParticipantsForEvent = async (actorId, eventId) => {
     const actor = await (0, store_1.getUserById)(actorId);
     assert(Boolean(actor), "Actor not found");
