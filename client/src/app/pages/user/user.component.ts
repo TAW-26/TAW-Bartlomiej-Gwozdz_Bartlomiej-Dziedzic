@@ -26,6 +26,7 @@ export class UserComponent {
   private readonly router = inject(Router);
 
   protected readonly user = this.auth.currentUser;
+  protected readonly isOrganizer = this.auth.isOrganizer;
   protected readonly joinedEvents = signal<EventItem[]>([]);
   protected readonly now = signal(Date.now());
 
@@ -51,6 +52,10 @@ export class UserComponent {
 
   protected goToModeration(): void {
     void this.router.navigate(['/moderation']);
+  }
+
+  protected goToOrganizer(): void {
+    void this.router.navigate(['/organizer']);
   }
 
   protected get roleLabel(): string {

@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { EventService } from '../../services/event';
 import { ModerationService } from '../../services/moderation';
@@ -10,7 +9,7 @@ import { UserService } from '../../services/user';
 @Component({
   selector: 'app-moderation',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './moderation.component.html',
   styleUrls: ['./moderation.component.scss'],
 })

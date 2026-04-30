@@ -1,9 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
 import { ResourceCardComponent } from '../../components/resource-card/resource-card.component';
 import { EventItem, EventStatus } from '../../models/api';
 import { EventService } from '../../services/event';
+import { AuthService } from '../../services/auth';
 
 type EventSearchFilters = {
   q: FormControl<string>;
@@ -17,13 +18,14 @@ type EventSearchFilters = {
 @Component({
   selector: 'app-events',
   standalone: true,
-  imports: [ReactiveFormsModule, ResourceCardComponent],
+  imports: [ReactiveFormsModule, ResourceCardComponent, RouterLink],
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.scss'],
 })
 export class EventsComponent {
   private readonly eventService = inject(EventService);
   private readonly route = inject(ActivatedRoute);
+  protected readonly isOrganizer = inject(AuthService).isOrganizer;
 
   protected readonly filters = new FormGroup<EventSearchFilters>({
     q: new FormControl('', { nonNullable: true }),

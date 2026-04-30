@@ -32,6 +32,7 @@ export class OrganizerComponent implements OnInit {
   showCreateForm = false;
   createLoading = false;
   createForm: CreateEventPayload = this.emptyCreateForm();
+  readonly pendingIds = new Set<string>();
 
   constructor(private readonly eventService: EventService) {}
 
@@ -62,6 +63,8 @@ export class OrganizerComponent implements OnInit {
       startsAt: this.toISO(this.createForm.startsAt),
       endsAt: this.toISO(this.createForm.endsAt),
     };
+    this.showCreateForm = false;
+    this.createForm = this.emptyCreateForm();
     this.createLoading = true;
     this.eventService
       .createEvent(payload)
@@ -69,10 +72,11 @@ export class OrganizerComponent implements OnInit {
       .subscribe({
         next: (ev) => {
           this.events = [ev, ...this.events];
-          this.showCreateForm = false;
-          this.createForm = this.emptyCreateForm();
         },
-        error: (err) => alert('Błąd tworzenia: ' + (err?.message ?? err)),
+        error: (err) => {
+          this.showCreateForm = true;
+          alert('Błąd tworzenia: ' + (err?.message ?? err));
+        },
       });
   }
 
@@ -103,23 +107,37 @@ export class OrganizerComponent implements OnInit {
       startsAt: this.editForm.startsAt ? this.toISO(this.editForm.startsAt) : undefined,
       endsAt: this.editForm.endsAt ? this.toISO(this.editForm.endsAt) : undefined,
     };
-    this.eventService.updateEvent(id, payload).subscribe({
+    const idx = this.events.findIndex((e) => e.id === id);
+    const snapshot = idx >= 0 ? { ...this.events[idx] } : null;
+    if (idx >= 0) {
+      this.events = this.events.map((e) =>
+        e.id === id ? { ...e, ...(payload as Partial<EventItem>) } : e,
+      );
+    }
+    this.editingEventId = null;
+    this.pendingIds.add(id);
+    this.eventService.updateEvent(id, payload).pipe(finalize(() => this.pendingIds.delete(id))).subscribe({
       next: (updated) => {
-        const idx = this.events.findIndex((e) => e.id === id);
-        if (idx >= 0) this.events[idx] = updated;
-        this.editingEventId = null;
+        const i = this.events.findIndex((e) => e.id === id);
+        if (i >= 0) this.events[i] = updated;
       },
-      error: (err) => alert('Błąd edycji: ' + (err?.message ?? err)),
+      error: (err) => {
+        if (snapshot && idx >= 0) this.events[idx] = snapshot;
+        this.editingEventId = id;
+        alert('Błąd edycji: ' + (err?.message ?? err));
+      },
     });
   }
 
   deleteEvent(id: string): void {
     if (!confirm('Na pewno usunąć to wydarzenie? Operacja jest nieodwracalna.')) return;
+    const saved = [...this.events];
+    this.events = this.events.filter((e) => e.id !== id);
     this.eventService.deleteEvent(id).subscribe({
-      next: () => {
-        this.events = this.events.filter((e) => e.id !== id);
+      error: (err) => {
+        this.events = saved;
+        alert('Błąd podczas usuwania: ' + (err?.message ?? err));
       },
-      error: (err) => alert('Błąd podczas usuwania: ' + (err?.message ?? err)),
     });
   }
 

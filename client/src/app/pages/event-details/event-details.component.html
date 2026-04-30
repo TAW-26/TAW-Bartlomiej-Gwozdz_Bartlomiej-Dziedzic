@@ -27,6 +27,12 @@
           {{ isParticipant() ? 'Opuść wydarzenie' : 'Dołącz do wydarzenia' }}
         </button>
       }
+
+      @if (canManageEvent()) {
+        <button class="details-action danger-action" type="button" (click)="deleteEvent()">
+          Usuń wydarzenie
+        </button>
+      }
     </section>
   </main>
 }

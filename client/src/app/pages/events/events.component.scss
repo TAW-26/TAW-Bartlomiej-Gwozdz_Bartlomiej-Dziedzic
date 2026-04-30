@@ -87,6 +87,31 @@
   filter: brightness(1.06);
 }
 
+.organizer-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.organizer-actions a {
+  display: inline-block;
+  border: 2px solid #0a1f12;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #1a5c32 0%, #144228 100%);
+  color: #e9efff;
+  font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 8px 18px 10px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 140ms ease;
+
+  &:hover {
+    filter: brightness(1.15);
+  }
+}
+
 .events-list {
   margin-top: 74px;
   display: grid;

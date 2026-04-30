@@ -63,6 +63,7 @@
     </section>
 
     <p *ngIf="loading" class="info-text">Ładowanie wydarzeń…</p>
+    <p *ngIf="createLoading && !loading" class="info-text syncing-text">Zapisywanie wydarzenia…</p>
     <p *ngIf="error" class="error">Błąd: {{ error }}</p>
     <p *ngIf="!loading && !error && events.length === 0" class="info-text">
       Nie masz jeszcze żadnych wydarzeń.
@@ -73,7 +74,7 @@
       <h3>Twoje wydarzenia ({{ events.length }})</h3>
 
       <ul class="events-list">
-        <li *ngFor="let event of events" class="event-item organizer-event-item">
+        <li *ngFor="let event of events" class="event-item organizer-event-item" [class.is-pending]="pendingIds.has(event.id)">
 
           <!-- View mode -->
           <ng-container *ngIf="editingEventId !== event.id">
@@ -156,7 +157,7 @@
             <p *ngIf="!loadingParticipants[event.id] && participantsMap[event.id]?.length === 0" class="info-text">
               Brak uczestników.
             </p>
-            <ul *ngIf="participantsMap[event.id]?.length > 0" class="participants-list">
+            <ul *ngIf="(participantsMap[event.id]?.length ?? 0) > 0" class="participants-list">
               <li *ngFor="let p of participantsMap[event.id]" class="participant-item">
                 <div class="info">
                   <div><strong>{{ p.fullName }}</strong></div>

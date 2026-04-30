@@ -86,6 +86,15 @@
   margin: 8px 0;
 }
 
+.syncing-text {
+  color: #7ec8a0;
+}
+
+.organizer-event-item.is-pending {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
 .error {
   color: #ff8a8a;
   font-size: 14px;
