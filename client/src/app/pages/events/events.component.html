@@ -40,7 +40,9 @@
         </select>
       </label>
 
-      <button class="search-submit" type="submit">Filtruj</button>
+      <button class="search-submit" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Szukanie…' : 'Filtruj' }}
+      </button>
     </form>
 
     @if (isOrganizer()) {
@@ -49,10 +51,18 @@
       </div>
     }
 
-    <div class="events-list">
-      @for (resource of resources(); track resource.id) {
-        <app-resource-card [resource]="resource"></app-resource-card>
-      }
-    </div>
+    @if (loading()) {
+      <div class="spinner-wrap">
+        <div class="spinner"></div>
+      </div>
+    } @else {
+      <div class="events-list">
+        @for (resource of resources(); track resource.id) {
+          <app-resource-card [resource]="resource"></app-resource-card>
+        } @empty {
+          <p class="empty-state">Brak wydarzeń spełniających kryteria.</p>
+        }
+      </div>
+    }
   </section>
 </main>

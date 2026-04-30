@@ -5,6 +5,7 @@ import { ResourceCardComponent } from '../../components/resource-card/resource-c
 import { EventItem, EventStatus } from '../../models/api';
 import { EventService } from '../../services/event';
 import { AuthService } from '../../services/auth';
+import { finalize } from 'rxjs/operators';
 
 type EventSearchFilters = {
   q: FormControl<string>;
@@ -37,6 +38,7 @@ export class EventsComponent {
   });
 
   protected readonly resources = signal<EventItem[]>([]);
+  protected readonly loading = signal(false);
 
   constructor() {
     this.resources.set((this.route.snapshot.data['events'] as EventItem[] | undefined) ?? []);
@@ -49,6 +51,7 @@ export class EventsComponent {
 
   private loadEvents(): void {
     const raw = this.filters.getRawValue();
+    this.loading.set(true);
     this.eventService
       .getEvents({
         q: raw.q || undefined,
@@ -58,6 +61,7 @@ export class EventsComponent {
         to: raw.to || undefined,
         status: (raw.status as EventStatus) || undefined,
       })
+      .pipe(finalize(() => this.loading.set(false)))
       .subscribe((events) => {
         this.resources.set(events);
       });
