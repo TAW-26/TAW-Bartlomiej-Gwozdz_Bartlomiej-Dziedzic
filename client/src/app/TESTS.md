@@ -49,21 +49,9 @@ Testuje logikę rejestracji i logowania:
 | `should send register payload to the backend`            | POST `/api/users/register` z poprawnym payloadem            |
 | `should send login payload and store the returned token` | POST `/api/users/login` i zapisanie tokenu w `localStorage` |
 
-```typescript
-// Przykład
-service.register({
-  email: 'new@example.com',
-  password: 'secret123',
-  confirmPassword: 'secret123',
-  fullName: 'New User'
-}).subscribe(...)
-
-// Oczekuje: POST /api/users/register z tym payloadem
-```
-
 ### **auth.integration.spec.ts** — AuthService Integration Tests
 
-Testuje rzeczywiste połączenie z backendem (wymaga uruchomionego serwera na :3000):
+Testuje rzeczywiste połączenie z backendem:
 
 | Test                                                              | Co sprawdza                               |
 | ----------------------------------------------------------------- | ----------------------------------------- |
@@ -118,57 +106,6 @@ Testuje główny komponent aplikacji:
 | ----------------------- | --------------------------------------------------------------- |
 | `should create the app` | Komponent się tworzy                                            |
 | `should render title`   | Nagłówek wyświetla "Aplikacja do obsługi gebeurteneń lokalnych" |
-
-## Jak działają testy unit?
-
-```typescript
-beforeEach(() => {
-  // Konfiguracja: HttpTestingController mockuje wszystkie HTTP requesty
-  TestBed.configureTestingModule({
-    providers: [provideHttpClient(), provideHttpClientTesting()],
-  });
-});
-
-it('should create an event', () => {
-  const payload = { name: 'Event', ... };
-
-  // 1. Wywołujemy serwis
-  service.createEvent(payload).subscribe((response) => {
-    expect(response).toEqual(mockEvent);
-  });
-
-  // 2. Sprawdzamy, czy poprawny request został wysłany
-  const request = httpMock.expectOne('/api/events');
-  expect(request.request.method).toBe('POST');
-  expect(request.request.body).toEqual(payload);
-
-  // 3. Mockujemy odpowiedź backendu
-  request.flush(mockEvent);
-});
-
-afterEach(() => {
-  // Weryfikujemy, że nie było żadnych "wiszących" requestów
-  httpMock.verify();
-});
-```
-
-## Wynik testów
-
-```
-✓ Test Files  7 passed (7)
-✓ Tests  20 passed (20)
-```
-
-Jeśli by jakiś test padł, widzielibyśmy:
-
-```
-✗ Test Files  1 failed | 6 passed
-✗ Tests  1 failed | 19 passed
-
-⎯⎯⎯⎯⎯ Failed Tests ⎯⎯⎯⎯⎯
- FAIL  src/app/services/event.spec.ts > should create an event
-AssertionError: expected {...} to equal {...}
-```
 
 ## Notatki
 
