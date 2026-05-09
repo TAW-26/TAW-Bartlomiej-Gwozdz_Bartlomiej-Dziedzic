@@ -424,3 +424,13 @@ export const logModerationAction = async (
 // ---------------------------------------------------------------------------
 
 export const toSafeEventView = (event: Event): EventView => toEventView(event);
+
+// ---------------------------------------------------------------------------
+// Test utility — clears all in-memory data (use in beforeEach)
+// ---------------------------------------------------------------------------
+
+export const resetMemoryStore = (): void => {
+  _users.clear();
+  _events.clear();
+  _modActions.clear();
+};
