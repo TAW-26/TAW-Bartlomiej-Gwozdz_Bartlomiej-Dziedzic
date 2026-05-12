@@ -15,7 +15,6 @@ export class EventService {
 
   constructor(private readonly http: HttpClient) {}
 
-
   /**
    * GET /api/events
    */
@@ -89,7 +88,7 @@ export class EventService {
 
   /**
    * DELETE /api/events/:id/participants/:userId
-   * Usuniecie uczestnika przez organizatora lub admina.
+   * Usunięcie uczestnika przez organizatora lub admina.
    */
   removeParticipant(eventId: string, userId: string): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(

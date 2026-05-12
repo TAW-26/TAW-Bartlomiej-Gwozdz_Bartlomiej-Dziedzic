@@ -78,7 +78,6 @@ export class LoginComponent {
 
     this.auth.register(payload).subscribe({
       next: () => {
-        // after successful registration, attempt to log the user in immediately
         this.auth.login({ email: payload.email, password: payload.password }).subscribe({
           next: () => {
             this.isSubmitting = false;
@@ -87,7 +86,6 @@ export class LoginComponent {
             void this.router.navigate(['/user']);
           },
           error: () => {
-            // registration succeeded but automatic login failed
             this.isSubmitting = false;
             this.messageKind = 'error';
             this.message =
