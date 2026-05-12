@@ -5,6 +5,7 @@ import { LoginPayload, RegisterPayload } from '../../models/api';
 import { AuthService } from '../../services/auth';
 import { LoginFormComponent } from './login-form/login-form.component';
 import { RegisterFormComponent } from './register-form/register-form.component';
+import { NotificationService } from '../../services/notification';
 
 type FormMode = 'login' | 'register';
 
@@ -18,13 +19,8 @@ type FormMode = 'login' | 'register';
 export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly notificationService = inject(NotificationService);
   private readonly route = inject(ActivatedRoute);
-
-  private showAlert(text: string): void {
-    if (typeof window !== 'undefined') {
-      window.alert(text);
-    }
-  }
 
   protected mode: FormMode = 'login';
   protected isSubmitting = false;
@@ -55,7 +51,7 @@ export class LoginComponent {
     this.auth.login(payload).subscribe({
       next: () => {
         this.isSubmitting = false;
-        this.showAlert('Logowanie udane. Przekierowuję do panelu użytkownika.');
+        this.notificationService.success('Logowanie udane.');
         void this.router.navigate(['/user']);
       },
       error: (err: { status?: number; error?: { error?: string } }) => {
@@ -66,7 +62,6 @@ export class LoginComponent {
           err?.status === 401
             ? 'Błędny email lub hasło.'
             : (backendMessage ?? 'Błąd logowania. Sprawdź dane i spróbuj ponownie.');
-        this.showAlert(`Logowanie nieudane: ${this.message}`);
       },
     });
   }
@@ -87,9 +82,8 @@ export class LoginComponent {
         this.auth.login({ email: payload.email, password: payload.password }).subscribe({
           next: () => {
             this.isSubmitting = false;
-            this.showAlert(
-              'Rejestracja i logowanie powiodły się. Przekierowuję do panelu użytkownika.',
-            );
+            this.notificationService.success('Rejestracja i logowanie powiodły się.');
+
             void this.router.navigate(['/user']);
           },
           error: () => {

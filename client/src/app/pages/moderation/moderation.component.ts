@@ -5,6 +5,7 @@ import { EventService } from '../../services/event';
 import { ModerationService } from '../../services/moderation';
 import { EventItem, User, UserRole } from '../../models/api';
 import { UserService } from '../../services/user';
+import { NotificationService } from '../../services/notification';
 
 @Component({
   selector: 'app-moderation',
@@ -17,6 +18,7 @@ export class ModerationComponent {
   private readonly eventsService = inject(EventService);
   private readonly moderationService = inject(ModerationService);
   private readonly userService = inject(UserService);
+  private readonly notificationService = inject(NotificationService);
 
   readonly events = signal<EventItem[]>([]);
   readonly loadingEvents = signal(false);
@@ -68,9 +70,10 @@ export class ModerationComponent {
     this.moderationService.removeEvent({ eventId: id, reason: reason || '' }).subscribe({
       next: () => {
         this.events.update((list) => list.filter((e) => e.id !== id));
-        alert('Wydarzenie usunięte.');
+        this.notificationService.success('Wydarzenie usunięte.');
       },
-      error: (err) => alert('Błąd podczas usuwania: ' + (err?.message ?? err)),
+      error: (err) =>
+        this.notificationService.error('Błąd podczas usuwania: ' + (err?.message ?? err)),
     });
   }
 
@@ -79,9 +82,10 @@ export class ModerationComponent {
     this.userService.changeUserRole(userId, role).subscribe({
       next: (u) => {
         this.users.update((list) => list.map((x) => (x.id === u.id ? u : x)));
-        alert('Rola zaktualizowana.');
+        this.notificationService.success('Rola zaktualizowana.');
       },
-      error: (err) => alert('Błąd podczas aktualizacji roli: ' + (err?.message ?? err)),
+      error: (err) =>
+        this.notificationService.error('Błąd podczas aktualizacji roli: ' + (err?.message ?? err)),
     });
   }
 
@@ -90,9 +94,12 @@ export class ModerationComponent {
     this.userService.deleteUser(userId).subscribe({
       next: () => {
         this.users.update((list) => list.filter((u) => u.id !== userId));
-        alert('Użytkownik usunięty.');
+        this.notificationService.success('Użytkownik usunięty.');
       },
-      error: (err) => alert('Błąd podczas usuwania użytkownika: ' + (err?.message ?? err)),
+      error: (err) =>
+        this.notificationService.error(
+          'Błąd podczas usuwania użytkownika: ' + (err?.message ?? err),
+        ),
     });
   }
 }

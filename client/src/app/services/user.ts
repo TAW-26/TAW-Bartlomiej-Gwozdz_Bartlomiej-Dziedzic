@@ -35,7 +35,7 @@ export class UserService {
 
   /**
    * GET /api/users/me/events
-   * Lista wydarzen, do ktorych dolaczyl zalogowany uzytkownik.
+   * Lista wydarzeń, do których dołączył zalogowany użytkownik.
    */
   getMyEvents(): Observable<EventItem[]> {
     return this.http.get<EventItem[]>(`${this.apiUrl}/me/events`);
