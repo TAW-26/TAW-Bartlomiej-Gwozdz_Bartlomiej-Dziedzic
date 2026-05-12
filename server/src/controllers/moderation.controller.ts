@@ -3,25 +3,24 @@ import { logModerationAction, deleteEvent } from "../store";
 import { UserService } from "../modules/services/user.service";
 
 export class ModerationController {
-  // UC13: Usuwanie przez administratora z logowaniem powodu
   static async moderateRemoveEvent(req: {
     userId: string;
     eventId: string;
-    reason: string;
-  }) {
+    reason?: string;
+  }): Promise<{ moderationId: string }> {
     await authorize(req.userId, ["admin"]);
 
-    await logModerationAction({
+    const log = await logModerationAction({
       adminId: req.userId,
       eventId: req.eventId,
       reason: req.reason,
       action: "remove_event",
     });
 
-    return deleteEvent(req.eventId);
+    await deleteEvent(req.eventId);
+    return { moderationId: log.id };
   }
 
-  // UC12: Zarządzanie użytkownikami przez Admina
   static async listAllUsers(req: { userId: string }) {
     await authorize(req.userId, ["admin"]);
     return UserService.getAll();

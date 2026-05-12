@@ -56,8 +56,7 @@ const buildMongoUri = (): string | undefined => {
 
   const user = process.env.MONGODB_USER;
   const password = process.env.MONGODB_PASSWORD;
-  const cluster =
-    process.env.MONGODB_CLUSTER ?? "cluster0.inw1xa4.mongodb.net";
+  const cluster = process.env.MONGODB_CLUSTER ?? "cluster0.inw1xa4.mongodb.net";
   const appName = process.env.MONGODB_APP_NAME ?? "Cluster0";
 
   if (!user || !password) {
@@ -88,7 +87,7 @@ const startServer = async (): Promise<void> => {
         await ensureAdminSeed();
       } catch (error) {
         console.error(
-          "error connecting to mongoDB",
+          "Failed to connect to MongoDB:",
           error instanceof Error ? error.message : error,
         );
       }
@@ -105,4 +104,3 @@ void startServer();
 
 export * from "./types";
 export * from "./store";
-export * from "./businessLogic";

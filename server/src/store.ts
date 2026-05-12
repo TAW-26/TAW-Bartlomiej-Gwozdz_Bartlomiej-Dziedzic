@@ -1,12 +1,5 @@
 import mongoose, { FilterQuery } from "mongoose";
-import {
-  Event,
-  EventView,
-  ModerationAction,
-  PublicUser,
-  User,
-  UserRole,
-} from "./types";
+import { Event, EventView, ModerationAction, PublicUser, User, UserRole } from "./types";
 
 interface UserDb {
   email: string;
@@ -92,8 +85,7 @@ const moderationActionSchema = new mongoose.Schema<ModerationActionDb>(
 );
 
 const UserModel =
-  (mongoose.models.User as mongoose.Model<UserDb>) ||
-  mongoose.model<UserDb>("User", userSchema);
+  (mongoose.models.User as mongoose.Model<UserDb>) || mongoose.model<UserDb>("User", userSchema);
 
 const EventModel =
   (mongoose.models.Event as mongoose.Model<EventDb>) ||
@@ -101,10 +93,7 @@ const EventModel =
 
 const ModerationActionModel =
   (mongoose.models.ModerationAction as mongoose.Model<ModerationActionDb>) ||
-  mongoose.model<ModerationActionDb>(
-    "ModerationAction",
-    moderationActionSchema,
-  );
+  mongoose.model<ModerationActionDb>("ModerationAction", moderationActionSchema);
 
 const sanitizeUser = (user: User): PublicUser => ({
   id: user.id,
@@ -159,8 +148,7 @@ const mapEventDocument = (doc: mongoose.HydratedDocument<EventDb>): Event => ({
   updatedAt: doc.updatedAt.toISOString(),
 });
 
-const escapeRegex = (value: string): string =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export const db = {
   UserModel,
@@ -198,9 +186,7 @@ export const createUser = async (input: {
   return sanitizeUser(mapUserDocument(created));
 };
 
-export const getUserByEmail = async (
-  email: string,
-): Promise<User | undefined> => {
+export const getUserByEmail = async (email: string): Promise<User | undefined> => {
   const user = await UserModel.findOne({
     email: email.toLowerCase().trim(),
   }).exec();
@@ -212,9 +198,7 @@ export const getUserById = async (id: string): Promise<User | undefined> => {
   return user ? mapUserDocument(user) : undefined;
 };
 
-export const getPublicUserById = async (
-  id: string,
-): Promise<PublicUser | undefined> => {
+export const getPublicUserById = async (id: string): Promise<PublicUser | undefined> => {
   const user = await getUserById(id);
   return user ? sanitizeUser(user) : undefined;
 };
@@ -290,12 +274,7 @@ export const listEvents = async (filters: {
 
   if (filters.q?.trim()) {
     const qRegex = new RegExp(escapeRegex(filters.q.trim()), "i");
-    query.$or = [
-      { name: qRegex },
-      { description: qRegex },
-      { location: qRegex },
-      { city: qRegex },
-    ];
+    query.$or = [{ name: qRegex }, { description: qRegex }, { location: qRegex }, { city: qRegex }];
   }
 
   if (filters.city?.trim()) {
@@ -303,10 +282,7 @@ export const listEvents = async (filters: {
   }
 
   if (filters.category?.trim()) {
-    query.category = new RegExp(
-      `^${escapeRegex(filters.category.trim())}$`,
-      "i",
-    );
+    query.category = new RegExp(`^${escapeRegex(filters.category.trim())}$`, "i");
   }
 
   if (filters.status) {
@@ -323,45 +299,29 @@ export const listEvents = async (filters: {
   const events = await EventModel.find(query).exec();
   return events
     .map(mapEventDocument)
-    .sort((left, right) => {
-      const leftPopularity = left.participants.length;
-      const rightPopularity = right.participants.length;
-
-      if (rightPopularity !== leftPopularity) {
-        return rightPopularity - leftPopularity;
+    .sort((a, b) => {
+      if (b.participants.length !== a.participants.length) {
+        return b.participants.length - a.participants.length;
       }
-
-      return (
-        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
-      );
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     })
     .map(toEventView);
 };
 
-export const listEventsByOrganizer = async (
-  organizerId: string,
-): Promise<EventView[]> => {
+export const listEventsByOrganizer = async (organizerId: string): Promise<EventView[]> => {
   const events = await EventModel.find({ organizerId }).exec();
   return events.map(mapEventDocument).map(toEventView);
 };
 
-export const listEventsByParticipant = async (
-  userId: string,
-): Promise<EventView[]> => {
+export const listEventsByParticipant = async (userId: string): Promise<EventView[]> => {
   const events = await EventModel.find({ participants: userId }).exec();
   return events
     .map(mapEventDocument)
-    .sort((left, right) => {
-      const leftPopularity = left.participants.length;
-      const rightPopularity = right.participants.length;
-
-      if (rightPopularity !== leftPopularity) {
-        return rightPopularity - leftPopularity;
+    .sort((a, b) => {
+      if (b.participants.length !== a.participants.length) {
+        return b.participants.length - a.participants.length;
       }
-
-      return (
-        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
-      );
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     })
     .map(toEventView);
 };
@@ -388,19 +348,13 @@ export const updateEvent = async (
     id,
     {
       ...(patch.name !== undefined ? { name: patch.name } : {}),
-      ...(patch.description !== undefined
-        ? { description: patch.description }
-        : {}),
-      ...(patch.startsAt !== undefined
-        ? { startsAt: new Date(patch.startsAt) }
-        : {}),
+      ...(patch.description !== undefined ? { description: patch.description } : {}),
+      ...(patch.startsAt !== undefined ? { startsAt: new Date(patch.startsAt) } : {}),
       ...(patch.endsAt !== undefined ? { endsAt: new Date(patch.endsAt) } : {}),
       ...(patch.location !== undefined ? { location: patch.location } : {}),
       ...(patch.city !== undefined ? { city: patch.city } : {}),
       ...(patch.category !== undefined ? { category: patch.category } : {}),
-      ...(patch.maxParticipants !== undefined
-        ? { maxParticipants: patch.maxParticipants }
-        : {}),
+      ...(patch.maxParticipants !== undefined ? { maxParticipants: patch.maxParticipants } : {}),
       ...(patch.imageUrl !== undefined ? { imageUrl: patch.imageUrl } : {}),
       ...(patch.status !== undefined ? { status: patch.status } : {}),
     },
@@ -432,10 +386,7 @@ export const addParticipant = async (
     return "already_joined";
   }
 
-  if (
-    event.maxParticipants &&
-    event.participants.length >= event.maxParticipants
-  ) {
+  if (event.maxParticipants && event.participants.length >= event.maxParticipants) {
     return "full";
   }
 
@@ -457,16 +408,12 @@ export const removeParticipant = async (
     return "not_joined";
   }
 
-  event.participants = event.participants.filter(
-    (participantId) => participantId !== userId,
-  );
+  event.participants = event.participants.filter((participantId) => participantId !== userId);
   await event.save();
   return toEventView(mapEventDocument(event));
 };
 
-export const listEventParticipants = async (
-  eventId: string,
-): Promise<PublicUser[] | undefined> => {
+export const listEventParticipants = async (eventId: string): Promise<PublicUser[] | undefined> => {
   const event = await EventModel.findById(eventId).exec();
   if (!event) {
     return undefined;
@@ -506,7 +453,7 @@ export const toSafeEventView = (event: Event): EventView => toEventView(event);
 // implementations so the server works without a MongoDB connection.
 // ---------------------------------------------------------------------------
 if (process.env.USE_MEMORY_DB === "true") {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
   const mem = require("./store-memory") as typeof import("./store-memory");
   Object.assign(exports, mem);
   console.log("[MemDB] In-memory store activated (USE_MEMORY_DB=true).");

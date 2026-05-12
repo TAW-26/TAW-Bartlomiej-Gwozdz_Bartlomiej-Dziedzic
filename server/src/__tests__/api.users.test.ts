@@ -1,12 +1,6 @@
 import request from "supertest";
 import app from "../app";
-import {
-  ADMIN_EMAIL,
-  ADMIN_PASSWORD,
-  USER_EMAIL,
-  resetAndSeed,
-  tokenFor,
-} from "./helpers";
+import { ADMIN_EMAIL, ADMIN_PASSWORD, USER_EMAIL, resetAndSeed, tokenFor } from "./helpers";
 
 let adminToken: string;
 let userToken: string;
@@ -53,17 +47,13 @@ describe("POST /api/users/login", () => {
 
 describe("GET /api/users", () => {
   it("admin widzi listę użytkowników → 200", async () => {
-    const res = await request(app)
-      .get("/api/users")
-      .set("Authorization", `Bearer ${adminToken}`);
+    const res = await request(app).get("/api/users").set("Authorization", `Bearer ${adminToken}`);
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThanOrEqual(3);
   });
 
   it("zwykły użytkownik dostaje 403", async () => {
-    const res = await request(app)
-      .get("/api/users")
-      .set("Authorization", `Bearer ${userToken}`);
+    const res = await request(app).get("/api/users").set("Authorization", `Bearer ${userToken}`);
     expect(res.status).toBe(403);
   });
 });

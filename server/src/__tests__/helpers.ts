@@ -1,9 +1,5 @@
 import { createAccessToken } from "../middlewares/auth.middleware";
-import {
-  ensureAdminSeed,
-  getUserByEmail,
-  resetMemoryStore,
-} from "../store-memory";
+import { ensureAdminSeed, getUserByEmail, resetMemoryStore } from "../store-memory";
 
 export const ADMIN_EMAIL = "admin@local-events.app";
 export const ORGANIZER_EMAIL = "organizer@local-events.app";
