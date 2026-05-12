@@ -88,7 +88,7 @@ const startServer = async (): Promise<void> => {
         await ensureAdminSeed();
       } catch (error) {
         console.error(
-          "error connecting to mongoDB",
+          "Failed to connect to MongoDB:",
           error instanceof Error ? error.message : error,
         );
       }

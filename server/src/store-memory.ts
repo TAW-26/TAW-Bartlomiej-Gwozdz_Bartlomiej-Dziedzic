@@ -1,7 +1,7 @@
 /**
- * In-memory store — używany gdy USE_MEMORY_DB=true.
- * Eksportuje dokładnie te same funkcje co store.ts, ale trzyma dane w pamięci RAM.
- * Dane są resetowane przy każdym restarcie serwera.
+ * In-memory store — active when USE_MEMORY_DB=true.
+ * Exports the same interface as store.ts but persists data in process memory.
+ * All data is lost on server restart.
  */
 import crypto from "crypto";
 import {
@@ -79,7 +79,7 @@ export const ensureAdminSeed = async (): Promise<void> => {
     createdAt: ts,
   });
 
-  // Seed organisatora (do testów)
+  // Seed organizer account
   const orgId = newId();
   _users.set(orgId, {
     id: orgId,
@@ -90,7 +90,7 @@ export const ensureAdminSeed = async (): Promise<void> => {
     createdAt: ts,
   });
 
-  // Seed zwykłego użytkownika
+  // Seed regular user account
   const userId = newId();
   _users.set(userId, {
     id: userId,
@@ -101,7 +101,7 @@ export const ensureAdminSeed = async (): Promise<void> => {
     createdAt: ts,
   });
 
-  // Seed przykładowych wydarzeń (organizator: admin)
+  // Seed sample events
   const seedEvents: Omit<Event, "id" | "participants" | "createdAt" | "updatedAt">[] = [
     {
       name: "Warsztaty Python od podstaw",
@@ -168,7 +168,7 @@ export const ensureAdminSeed = async (): Promise<void> => {
 };
 
 // ---------------------------------------------------------------------------
-// Fake db export (null models – not used in memory mode)
+// Stub models — not applicable in memory mode
 // ---------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -235,11 +235,9 @@ export const updateUser = async (
 export const deleteUser = async (id: string): Promise<boolean> => {
   if (!_users.has(id)) return false;
   _users.delete(id);
-  // Remove organizer's events
   for (const [eid, ev] of _events) {
     if (ev.organizerId === id) _events.delete(eid);
   }
-  // Remove from participants
   for (const [eid, ev] of _events) {
     if (ev.participants.includes(id)) {
       _events.set(eid, {

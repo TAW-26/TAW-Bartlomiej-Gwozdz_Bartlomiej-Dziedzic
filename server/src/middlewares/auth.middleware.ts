@@ -1,18 +1,7 @@
 import { NextFunction, Request, Response } from "express";
+import jwt from "jsonwebtoken";
 import { getUserById } from "../store";
 import { UserRole } from "../types";
-
-const jwt = require("jsonwebtoken") as {
-  sign: (
-    payload: Record<string, unknown>,
-    secret: string,
-    options?: Record<string, unknown>,
-  ) => string;
-  verify: (
-    token: string,
-    secret: string,
-  ) => { id: string; role: UserRole; email: string };
-};
 
 export interface AuthUser {
   id: string;
@@ -37,23 +26,21 @@ export const authenticateJWT = (
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res
-      .status(401)
-      .json({ error: "Brak lub niepoprawny naglowek Authorization" });
+    res.status(401).json({ error: "Missing or invalid Authorization header" });
     return;
   }
 
   const token = authHeader.slice("Bearer ".length).trim();
   if (!token) {
-    res.status(401).json({ error: "Brak tokena" });
+    res.status(401).json({ error: "Missing bearer token" });
     return;
   }
 
   try {
-    req.user = jwt.verify(token, getJwtSecret());
+    req.user = jwt.verify(token, getJwtSecret()) as AuthUser;
     next();
   } catch {
-    res.status(401).json({ error: "Token jest niewazny lub wygasl" });
+    res.status(401).json({ error: "Token is invalid or has expired" });
   }
 };
 
@@ -64,12 +51,12 @@ export const requireRoles = (allowedRoles: UserRole[]) => {
     next: NextFunction,
   ): void => {
     if (!req.user) {
-      res.status(401).json({ error: "Uzytkownik niezalogowany" });
+      res.status(401).json({ error: "Authentication required" });
       return;
     }
 
     if (!allowedRoles.includes(req.user.role)) {
-      res.status(403).json({ error: "Brak uprawnien" });
+      res.status(403).json({ error: "Insufficient permissions" });
       return;
     }
 
@@ -77,13 +64,13 @@ export const requireRoles = (allowedRoles: UserRole[]) => {
   };
 };
 
-// Legacy helpers kept for compatibility with controller classes.
+// Helpers used by legacy controller classes; not wired into the Express router.
 export const authorize = async (actorId: string, allowedRoles: UserRole[]) => {
   const user = await getUserById(actorId);
-  if (!user) throw new Error("Uzytkownik nie istnieje");
+  if (!user) throw new Error("User not found");
 
   if (!allowedRoles.includes(user.role)) {
-    throw new Error("Brak uprawnien do wykonania tej akcji");
+    throw new Error("Insufficient permissions to perform this action");
   }
   return user;
 };
@@ -95,5 +82,5 @@ export const isOwnerOrAdmin = async (
   const user = await getUserById(actorId);
   if (user?.role === "admin") return true;
   if (actorId === resourceOrganizerId) return true;
-  throw new Error("Brak uprawnien");
+  throw new Error("Insufficient permissions");
 };
