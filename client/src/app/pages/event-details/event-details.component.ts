@@ -23,7 +23,6 @@ export class EventDetailsComponent {
   protected readonly event = signal<EventItem | null>(null);
   protected readonly isParticipant = signal(false);
   protected readonly loading = signal(false);
-  protected readonly error = signal<string | null>(null);
 
   protected onImageError(event: Event): void {
     const image = event.target as HTMLImageElement | null;
@@ -52,7 +51,7 @@ export class EventDetailsComponent {
           this.loadParticipationStatus(event.id);
         },
         error: (err: any) => {
-          this.error.set('Nie udało się załadować szczegółów wydarzenia.');
+          this.notificationService.error('Nie udało się załadować szczegółów wydarzenia.');
           this.loading.set(false);
         },
       });

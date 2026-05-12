@@ -1,6 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { EventService } from '../../services/event';
 import { ModerationService } from '../../services/moderation';
@@ -18,7 +17,6 @@ export class ModerationComponent {
   private readonly eventsService = inject(EventService);
   private readonly moderationService = inject(ModerationService);
   private readonly userService = inject(UserService);
-  private readonly router = inject(Router);
 
   readonly events = signal<EventItem[]>([]);
   readonly loadingEvents = signal(false);

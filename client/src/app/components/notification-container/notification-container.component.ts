@@ -121,8 +121,4 @@ import { NotificationService, Notification } from '../../services/notification';
 })
 export class NotificationContainerComponent {
   protected notificationService = inject(NotificationService);
-
-  protected handleAnimationDone(event: any, id: string): void {
-    // Handle animation if needed
-  }
 }
