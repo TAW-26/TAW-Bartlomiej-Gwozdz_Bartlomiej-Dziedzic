@@ -11,10 +11,7 @@ import {
   listEventParticipants,
   toSafeEventView,
 } from "../../store";
-import {
-  CreateEventDTO,
-  EventFilters,
-} from "../../interfaces/event.interfaces";
+import { CreateEventDTO, EventFilters } from "../../interfaces/event.interfaces";
 import { EventView } from "../models/event.model";
 import { PublicUser } from "../models/user.model";
 
@@ -23,10 +20,7 @@ export class EventService {
     return listEvents(filters);
   }
 
-  static async create(
-    organizerId: string,
-    data: CreateEventDTO,
-  ): Promise<EventView> {
+  static async create(organizerId: string, data: CreateEventDTO): Promise<EventView> {
     if (new Date(data.endsAt) <= new Date(data.startsAt)) {
       throw new Error("End date must be later than start date");
     }
@@ -61,8 +55,7 @@ export class EventService {
     if (result === "not_found") throw new Error("Event not found");
     if (result === "closed") throw new Error("Event is closed");
     if (result === "full") throw new Error("No available slots");
-    if (result === "already_joined")
-      throw new Error("User is already registered for this event");
+    if (result === "already_joined") throw new Error("User is already registered for this event");
 
     return result as EventView;
   }
@@ -76,8 +69,7 @@ export class EventService {
   static async leaveEvent(eventId: string, userId: string): Promise<EventView> {
     const result = await removeParticipant(eventId, userId);
     if (result === "not_found") throw new Error("Event not found");
-    if (result === "not_joined")
-      throw new Error("User is not a participant of this event");
+    if (result === "not_joined") throw new Error("User is not a participant of this event");
     return result as EventView;
   }
 
@@ -87,23 +79,17 @@ export class EventService {
   ): Promise<EventView> {
     const result = await removeParticipant(eventId, participantId);
     if (result === "not_found") throw new Error("Event not found");
-    if (result === "not_joined")
-      throw new Error("Participant not found in this event");
+    if (result === "not_joined") throw new Error("Participant not found in this event");
     return result as EventView;
   }
 
-  static async update(
-    eventId: string,
-    data: Partial<CreateEventDTO>,
-  ): Promise<EventView> {
+  static async update(eventId: string, data: Partial<CreateEventDTO>): Promise<EventView> {
     const updated = await updateEvent(eventId, data);
     if (!updated) throw new Error("Failed to update event");
     return updated;
   }
 
-  static async getParticipants(
-    eventId: string,
-  ): Promise<PublicUser[] | undefined> {
+  static async getParticipants(eventId: string): Promise<PublicUser[] | undefined> {
     return listEventParticipants(eventId);
   }
 }

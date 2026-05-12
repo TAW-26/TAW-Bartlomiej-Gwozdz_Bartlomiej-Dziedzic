@@ -33,11 +33,7 @@ export class EventController {
     return EventService.leaveEvent(req.eventId, req.userId);
   }
 
-  static async update(req: {
-    userId: string;
-    eventId: string;
-    body: Partial<CreateEventDTO>;
-  }) {
+  static async update(req: { userId: string; eventId: string; body: Partial<CreateEventDTO> }) {
     const event = await getEventById(req.eventId);
     if (!event) throw new Error("Event not found");
 
@@ -62,11 +58,7 @@ export class EventController {
     return EventService.getParticipants(req.eventId);
   }
 
-  static async removeParticipant(req: {
-    userId: string;
-    eventId: string;
-    participantId: string;
-  }) {
+  static async removeParticipant(req: { userId: string; eventId: string; participantId: string }) {
     const event = await getEventById(req.eventId);
     if (!event) throw new Error("Event not found");
 

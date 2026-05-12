@@ -45,11 +45,7 @@ export const authenticateJWT = (
 };
 
 export const requireRoles = (allowedRoles: UserRole[]) => {
-  return (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ): void => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: "Authentication required" });
       return;
@@ -75,10 +71,7 @@ export const authorize = async (actorId: string, allowedRoles: UserRole[]) => {
   return user;
 };
 
-export const isOwnerOrAdmin = async (
-  actorId: string,
-  resourceOrganizerId: string,
-) => {
+export const isOwnerOrAdmin = async (actorId: string, resourceOrganizerId: string) => {
   const user = await getUserById(actorId);
   if (user?.role === "admin") return true;
   if (actorId === resourceOrganizerId) return true;

@@ -1,10 +1,4 @@
-import {
-  createUser,
-  getUserByEmail,
-  getPublicUsers,
-  updateUser,
-  deleteUser,
-} from "../../store";
+import { createUser, getUserByEmail, getPublicUsers, updateUser, deleteUser } from "../../store";
 import { PublicUser, UserRole } from "../models/user.model";
 
 interface RegisterInput {
@@ -18,8 +12,7 @@ interface RegisterInput {
 export class UserService {
   static async register(data: RegisterInput): Promise<PublicUser> {
     if (!data.email?.trim()) throw new Error("Email is required");
-    if (data.password.length < 8)
-      throw new Error("Password must be at least 8 characters");
+    if (data.password.length < 8) throw new Error("Password must be at least 8 characters");
     if (data.confirmPassword !== undefined && data.password !== data.confirmPassword)
       throw new Error("Passwords must match");
 
