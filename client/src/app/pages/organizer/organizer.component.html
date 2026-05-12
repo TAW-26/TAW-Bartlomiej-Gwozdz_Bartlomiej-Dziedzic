@@ -105,7 +105,7 @@
       <p class="error">Błąd: {{ error() }}</p>
     }
 
-    @if (!loading() && !error() && events().length === 0) {
+    @if (!isLoading() && !error() && events().length === 0) {
       <p class="info-text">Nie masz jeszcze żadnych wydarzeń.</p>
     }
 

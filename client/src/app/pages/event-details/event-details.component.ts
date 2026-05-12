@@ -5,6 +5,7 @@ import { EventService } from '../../services/event';
 import { AuthService } from '../../services/auth';
 import { UserService } from '../../services/user';
 import { NotificationService } from '../../services/notification';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-event-details',
@@ -23,7 +24,6 @@ export class EventDetailsComponent {
   protected readonly event = signal<EventItem | null>(null);
   protected readonly isParticipant = signal(false);
   protected readonly loading = signal(false);
-  protected readonly error = signal<string | null>(null);
 
   protected onImageError(event: Event): void {
     const image = event.target as HTMLImageElement | null;
@@ -51,8 +51,8 @@ export class EventDetailsComponent {
           this.loading.set(false);
           this.loadParticipationStatus(event.id);
         },
-        error: (err: any) => {
-          this.error.set('Nie udało się załadować szczegółów wydarzenia.');
+        error: (err: HttpErrorResponse) => {
+          this.notificationService.error('Nie udało się załadować szczegółów wydarzenia.');
           this.loading.set(false);
         },
       });
@@ -76,7 +76,7 @@ export class EventDetailsComponent {
           this.isParticipant.set(false);
           this.notificationService.success('Rezygnacja z wydarzenia przyjęta.');
         },
-        error: (err: any) => {
+        error: (err: HttpErrorResponse) => {
           this.notificationService.error('Nie udało się zrezygnować z wydarzenia.');
         },
       });
@@ -86,7 +86,7 @@ export class EventDetailsComponent {
           this.isParticipant.set(true);
           this.notificationService.success('Dołączyłeś do wydarzenia!');
         },
-        error: (err: any) => {
+        error: (err: HttpErrorResponse) => {
           this.notificationService.error('Nie udało się dołączyć do wydarzenia.');
         },
       });
@@ -104,7 +104,7 @@ export class EventDetailsComponent {
         this.notificationService.success('Wydarzenie zostało usunięte.');
         void this.router.navigate(['/events']);
       },
-      error: (err: any) => {
+      error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         this.notificationService.error('Nie udało się usunąć wydarzenia.');
       },

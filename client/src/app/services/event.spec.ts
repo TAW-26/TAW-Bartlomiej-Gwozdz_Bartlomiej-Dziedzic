@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { EventService } from './event';
+
 import { EventItem, Participant } from '../models/api';
 
 describe('EventService', () => {

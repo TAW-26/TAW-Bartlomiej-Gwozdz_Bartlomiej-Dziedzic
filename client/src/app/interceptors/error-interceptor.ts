@@ -21,7 +21,7 @@ export const errorInterceptor: HttpInterceptorFn = (
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       // Determine error message based on status and response
-      let errorMessage = 'Nieznąd błąd. Spróbuj ponownie.';
+      let errorMessage = 'Nieznany błąd. Spróbuj ponownie.';
 
       if (error.error?.error) {
         // Backend error message

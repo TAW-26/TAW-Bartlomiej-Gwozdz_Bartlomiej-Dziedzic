@@ -7,6 +7,7 @@ import { EventService } from '../../services/event';
 import { AuthService } from '../../services/auth';
 import { NotificationService } from '../../services/notification';
 import { finalize } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 
 type EventSearchFilters = {
   q: FormControl<string>;
@@ -73,7 +74,7 @@ export class EventsComponent {
             this.notificationService.info('Brak wydarzeń spełniających kryteria wyszukiwania.');
           }
         },
-        error: (err: any) => {
+        error: (err: HttpErrorResponse) => {
           this.error.set('Nie udało się załadować wydarzeń.');
         },
       });

@@ -1,10 +1,6 @@
-export interface Api {
-}
-
 export type UserRole = 'user' | 'organizer' | 'admin';
 
 export type EventStatus = 'open' | 'closed';
-
 
 export interface User {
   id: string;
@@ -29,7 +25,6 @@ export interface LoginResponse {
   user: User;
   token: string;
 }
-
 
 export interface EventItem {
   id: string;

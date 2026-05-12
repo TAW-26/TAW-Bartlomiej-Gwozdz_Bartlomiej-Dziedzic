@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { AuthService } from './auth';
+
 import { LoginResponse, User } from '../models/api';
 
 describe('AuthService', () => {
@@ -30,6 +31,7 @@ describe('AuthService', () => {
   afterEach(() => {
     httpMock.verify();
     localStorage.clear();
+
   });
 
   it('should send register payload to the backend', () => {

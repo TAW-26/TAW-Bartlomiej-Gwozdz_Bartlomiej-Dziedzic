@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { UserService } from './user';
+
 import { EventItem, User, UserRole } from '../models/api';
 
 describe('UserService', () => {

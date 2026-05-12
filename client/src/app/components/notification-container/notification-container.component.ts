@@ -9,12 +9,7 @@ import { NotificationService, Notification } from '../../services/notification';
   template: `
     <div class="notification-container">
       @for (notification of notificationService.notifications(); track notification.id) {
-        <div
-          class="notification"
-          [ngClass]="'notification--' + notification.type"
-          [@slideIn]
-          (@slideIn.done)="handleAnimationDone($event, notification.id)"
-        >
+        <div class="notification" [ngClass]="'notification--' + notification.type">
           <span class="notification__message">{{ notification.message }}</span>
           <button
             class="notification__close"
@@ -121,8 +116,4 @@ import { NotificationService, Notification } from '../../services/notification';
 })
 export class NotificationContainerComponent {
   protected notificationService = inject(NotificationService);
-
-  protected handleAnimationDone(event: any, id: string): void {
-    // Handle animation if needed
-  }
 }
