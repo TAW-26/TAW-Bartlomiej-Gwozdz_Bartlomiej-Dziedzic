@@ -10,7 +10,7 @@ export async function skipIfBackendOffline(): Promise<void> {
   const backendUrl = 'http://localhost:3000/health';
 
   try {
-    const response = await fetch(backendUrl, { timeout: 2000 });
+    const response = await fetch(backendUrl, { signal: AbortSignal.timeout(2000) });
     if (!response.ok) {
       throw new Error(`Backend health check failed: ${response.status}`);
     }
@@ -26,20 +26,15 @@ export async function skipIfBackendOffline(): Promise<void> {
 /**
  * Helper to mark a test as pending if backend is offline.
  */
-export function describeIfBackendOnline(
-  name: string,
-  fn: (describe: typeof describe) => void,
-): void {
+export function describeIfBackendOnline(name: string, fn: () => void): void {
   describe(name, () => {
     beforeAll((done) => {
       skipIfBackendOffline()
         .then(() => done())
         .catch(() => {
-          // Backend offline — all tests in this suite are skipped
           done();
         });
     });
-
-    fn(describe);
+    fn();
   });
 }
