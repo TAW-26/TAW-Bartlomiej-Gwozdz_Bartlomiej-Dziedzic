@@ -18,6 +18,13 @@ npm install
 npm run dev
 ```
 
+#### Testy
+
+```bash
+cd server
+npm test
+```
+
 Backend API: `http://localhost:3000`
 Endpoint testowy: `http://localhost:3000/api/health`
 

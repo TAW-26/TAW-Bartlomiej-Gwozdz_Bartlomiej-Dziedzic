@@ -20,11 +20,10 @@ export const errorInterceptor: HttpInterceptorFn = (
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Determine error message based on status and response
-      let errorMessage = 'Nieznąd błąd. Spróbuj ponownie.';
+      let errorMessage = 'Nieznany błąd. Spróbuj ponownie.';
 
       if (error.error?.error) {
-        // Backend error message
+        // Wiadomość błędu backendu
         errorMessage = error.error.error;
       } else if (error.error?.message) {
         errorMessage = error.error.message;
@@ -56,12 +55,11 @@ export const errorInterceptor: HttpInterceptorFn = (
         }
       }
 
-      // Show notification for API errors
+      // Pokazuje powiadomienia dla błędów backendu
       if (req.url.includes('/api/')) {
         notificationService.error(errorMessage);
       }
 
-      // Return the error for component-specific handling if needed
       return throwError(() => ({
         ...error,
         userMessage: errorMessage,

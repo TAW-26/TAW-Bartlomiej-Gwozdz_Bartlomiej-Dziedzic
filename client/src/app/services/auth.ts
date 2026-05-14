@@ -54,7 +54,7 @@ export class AuthService {
   }
 
   private loadUserFromToken(): User | null {
-    // Guard: localStorage is unavailable
+    // Guard: localStorage niedostępny w SSR
     if (typeof localStorage === 'undefined') return null;
 
     const token = localStorage.getItem(TOKEN_KEY);

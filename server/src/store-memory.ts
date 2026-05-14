@@ -1,7 +1,7 @@
 /**
- * In-memory store — używany gdy USE_MEMORY_DB=true.
- * Eksportuje dokładnie te same funkcje co store.ts, ale trzyma dane w pamięci RAM.
- * Dane są resetowane przy każdym restarcie serwera.
+ * In-memory store — active when USE_MEMORY_DB=true.
+ * Exports the same interface as store.ts but persists data in process memory.
+ * All data is lost on server restart.
  */
 import crypto from "crypto";
 import {
@@ -56,8 +56,7 @@ const toEventView = (event: Event): EventView => ({
   updatedAt: event.updatedAt,
 });
 
-const escapeRegex = (v: string): string =>
-  v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // ---------------------------------------------------------------------------
 // Seed
@@ -68,7 +67,7 @@ export const ensureAdminSeed = async (): Promise<void> => {
   if (existing) return;
 
   const adminId = newId();
-  const ts = now();
+  const timestamp = now();
 
   _users.set(adminId, {
     id: adminId,
@@ -76,10 +75,10 @@ export const ensureAdminSeed = async (): Promise<void> => {
     password: "admin1234",
     fullName: "System Administrator",
     role: "admin",
-    createdAt: ts,
+    createdAt: timestamp,
   });
 
-  // Seed organisatora (do testów)
+  // Seed organizer account
   const orgId = newId();
   _users.set(orgId, {
     id: orgId,
@@ -87,10 +86,10 @@ export const ensureAdminSeed = async (): Promise<void> => {
     password: "organizer1234",
     fullName: "Jan Kowalski",
     role: "organizer",
-    createdAt: ts,
+    createdAt: timestamp,
   });
 
-  // Seed zwykłego użytkownika
+  // Seed regular user account
   const userId = newId();
   _users.set(userId, {
     id: userId,
@@ -98,10 +97,10 @@ export const ensureAdminSeed = async (): Promise<void> => {
     password: "password123",
     fullName: "Test User",
     role: "user",
-    createdAt: ts,
+    createdAt: timestamp,
   });
 
-  // Seed przykładowych wydarzeń (organizator: admin)
+  // Seed sample events
   const seedEvents: Omit<Event, "id" | "participants" | "createdAt" | "updatedAt">[] = [
     {
       name: "Warsztaty Python od podstaw",
@@ -158,7 +157,7 @@ export const ensureAdminSeed = async (): Promise<void> => {
 
   for (const ev of seedEvents) {
     const id = newId();
-    _events.set(id, { ...ev, id, participants: [], createdAt: ts, updatedAt: ts });
+    _events.set(id, { ...ev, id, participants: [], createdAt: timestamp, updatedAt: timestamp });
   }
 
   console.log("[MemDB] Seeded admin, organizer, user and 4 sample events.");
@@ -168,7 +167,7 @@ export const ensureAdminSeed = async (): Promise<void> => {
 };
 
 // ---------------------------------------------------------------------------
-// Fake db export (null models – not used in memory mode)
+// Stub models — not applicable in memory mode
 // ---------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -201,19 +200,14 @@ export const createUser = async (input: {
   return sanitizeUser(user);
 };
 
-export const getUserByEmail = async (
-  email: string,
-): Promise<User | undefined> => {
+export const getUserByEmail = async (email: string): Promise<User | undefined> => {
   const lower = email.toLowerCase().trim();
   return [..._users.values()].find((u) => u.email === lower);
 };
 
-export const getUserById = async (id: string): Promise<User | undefined> =>
-  _users.get(id);
+export const getUserById = async (id: string): Promise<User | undefined> => _users.get(id);
 
-export const getPublicUserById = async (
-  id: string,
-): Promise<PublicUser | undefined> => {
+export const getPublicUserById = async (id: string): Promise<PublicUser | undefined> => {
   const user = _users.get(id);
   return user ? sanitizeUser(user) : undefined;
 };
@@ -235,16 +229,14 @@ export const updateUser = async (
 export const deleteUser = async (id: string): Promise<boolean> => {
   if (!_users.has(id)) return false;
   _users.delete(id);
-  // Remove organizer's events
-  for (const [eid, ev] of _events) {
-    if (ev.organizerId === id) _events.delete(eid);
+  for (const [entryId, event] of _events) {
+    if (event.organizerId === id) _events.delete(entryId);
   }
-  // Remove from participants
-  for (const [eid, ev] of _events) {
-    if (ev.participants.includes(id)) {
-      _events.set(eid, {
-        ...ev,
-        participants: ev.participants.filter((p) => p !== id),
+  for (const [entryId, event] of _events) {
+    if (event.participants.includes(id)) {
+      _events.set(entryId, {
+        ...event,
+        participants: event.participants.filter((participantId) => participantId !== id),
         updatedAt: now(),
       });
     }
@@ -260,14 +252,19 @@ export const createEvent = async (
   input: Omit<Event, "id" | "participants" | "createdAt" | "updatedAt">,
 ): Promise<EventView> => {
   const id = newId();
-  const ts = now();
-  const event: Event = { ...input, id, participants: [], createdAt: ts, updatedAt: ts };
+  const timestamp = now();
+  const event: Event = {
+    ...input,
+    id,
+    participants: [],
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
   _events.set(id, event);
   return toEventView(event);
 };
 
-export const getEventById = async (id: string): Promise<Event | undefined> =>
-  _events.get(id);
+export const getEventById = async (id: string): Promise<Event | undefined> => _events.get(id);
 
 export const listEvents = async (filters: {
   q?: string;
@@ -280,18 +277,22 @@ export const listEvents = async (filters: {
   let result = [..._events.values()];
 
   if (filters.q?.trim()) {
-    const re = new RegExp(escapeRegex(filters.q.trim()), "i");
+    const regex = new RegExp(escapeRegex(filters.q.trim()), "i");
     result = result.filter(
-      (e) => re.test(e.name) || re.test(e.description) || re.test(e.location) || re.test(e.city),
+      (e) =>
+        regex.test(e.name) ||
+        regex.test(e.description) ||
+        regex.test(e.location) ||
+        regex.test(e.city),
     );
   }
   if (filters.city?.trim()) {
-    const re = new RegExp(`^${escapeRegex(filters.city.trim())}$`, "i");
-    result = result.filter((e) => re.test(e.city));
+    const regex = new RegExp(`^${escapeRegex(filters.city.trim())}$`, "i");
+    result = result.filter((e) => regex.test(e.city));
   }
   if (filters.category?.trim()) {
-    const re = new RegExp(`^${escapeRegex(filters.category.trim())}$`, "i");
-    result = result.filter((e) => re.test(e.category));
+    const regex = new RegExp(`^${escapeRegex(filters.category.trim())}$`, "i");
+    result = result.filter((e) => regex.test(e.category));
   }
   if (filters.status) {
     result = result.filter((e) => e.status === filters.status);
@@ -314,17 +315,11 @@ export const listEvents = async (filters: {
     .map(toEventView);
 };
 
-export const listEventsByOrganizer = async (
-  organizerId: string,
-): Promise<EventView[]> => {
-  return [..._events.values()]
-    .filter((e) => e.organizerId === organizerId)
-    .map(toEventView);
+export const listEventsByOrganizer = async (organizerId: string): Promise<EventView[]> => {
+  return [..._events.values()].filter((e) => e.organizerId === organizerId).map(toEventView);
 };
 
-export const listEventsByParticipant = async (
-  userId: string,
-): Promise<EventView[]> => {
+export const listEventsByParticipant = async (userId: string): Promise<EventView[]> => {
   return [..._events.values()]
     .filter((e) => e.participants.includes(userId))
     .sort((a, b) => {
@@ -340,8 +335,16 @@ export const updateEvent = async (
   patch: Partial<
     Pick<
       Event,
-      | "name" | "description" | "startsAt" | "endsAt" | "location" | "city"
-      | "category" | "maxParticipants" | "imageUrl" | "status"
+      | "name"
+      | "description"
+      | "startsAt"
+      | "endsAt"
+      | "location"
+      | "city"
+      | "category"
+      | "maxParticipants"
+      | "imageUrl"
+      | "status"
     >
   >,
 ): Promise<EventView | undefined> => {
@@ -366,8 +369,7 @@ export const addParticipant = async (
   if (!event) return "not_found";
   if (event.status !== "open") return "closed";
   if (event.participants.includes(userId)) return "already_joined";
-  if (event.maxParticipants && event.participants.length >= event.maxParticipants)
-    return "full";
+  if (event.maxParticipants && event.participants.length >= event.maxParticipants) return "full";
 
   const updated: Event = {
     ...event,
@@ -395,9 +397,7 @@ export const removeParticipant = async (
   return toEventView(updated);
 };
 
-export const listEventParticipants = async (
-  eventId: string,
-): Promise<PublicUser[] | undefined> => {
+export const listEventParticipants = async (eventId: string): Promise<PublicUser[] | undefined> => {
   const event = _events.get(eventId);
   if (!event) return undefined;
   return event.participants
@@ -424,3 +424,13 @@ export const logModerationAction = async (
 // ---------------------------------------------------------------------------
 
 export const toSafeEventView = (event: Event): EventView => toEventView(event);
+
+// ---------------------------------------------------------------------------
+// Test utility — clears all in-memory data (use in beforeEach)
+// ---------------------------------------------------------------------------
+
+export const resetMemoryStore = (): void => {
+  _users.clear();
+  _events.clear();
+  _modActions.clear();
+};
