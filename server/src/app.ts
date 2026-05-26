@@ -3,10 +3,18 @@ import { EventController } from "./controllers/event.controller";
 import { ModerationController } from "./controllers/moderation.controller";
 import { UserController } from "./controllers/user.controller";
 import { AuthenticatedRequest, authenticateJWT, requireRoles } from "./middlewares/auth.middleware";
+import { metricsMiddleware } from "./middlewares/metricsMiddleware";
+import { apiErrorsTotal, register } from "./metrics";
 import { UserRole } from "./types";
 
 const app = express();
 app.use(express.json());
+app.use(metricsMiddleware);
+
+app.get("/metrics", async (_req, res) => {
+  res.set("Content-Type", register.contentType);
+  res.end(await register.metrics());
+});
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", message: "Server is running" });
@@ -62,6 +70,7 @@ app.get("/api/events/:id", async (req, res: Response) => {
     });
     res.json(details);
   } catch (error) {
+    apiErrorsTotal.inc({ type: "not_found" });
     res.status(404).json({
       error: error instanceof Error ? error.message : "Event not found",
     });
@@ -80,6 +89,7 @@ app.post(
       });
       return res.status(201).json(created);
     } catch (error) {
+      apiErrorsTotal.inc({ type: "bad_request" });
       return res.status(400).json({
         error: error instanceof Error ? error.message : "Failed to create event",
       });
@@ -198,6 +208,7 @@ app.post("/api/users/register", async (req, res: Response) => {
     });
     return res.status(201).json(user);
   } catch (error) {
+    apiErrorsTotal.inc({ type: "bad_request" });
     return res.status(400).json({
       error: error instanceof Error ? error.message : "Failed to register user",
     });
