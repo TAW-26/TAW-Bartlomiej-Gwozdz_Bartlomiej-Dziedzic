@@ -4,7 +4,7 @@ import path from "path";
 import app from "./app";
 import { ensureAdminSeed } from "./store";
 
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5000;
 
 interface LocalSecrets {
   mongodbUser?: string;
