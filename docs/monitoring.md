@@ -20,13 +20,13 @@ scrape_configs:
         labels:
           app: "prometheus"
 
-  - job_name: "mean-app-server"
+  - job_name: "taw-backend"
     metrics_path: "/metrics"
     scrape_interval: 5s
     static_configs:
       - targets: ["localhost:5000"]
         labels:
-          app: "mean-app"
+          app: "taw-backend"
 ```
 
 Następnie uruchom Prometheusa:
@@ -37,7 +37,7 @@ Następnie uruchom Prometheusa:
 
 Sprawdź czy metryki są zbierane: [http://localhost:9090/targets](http://localhost:9090/targets)
 
-Oba joby (`prometheus`, `mean-app-server`) powinny mieć status **UP**.
+Oba joby (`prometheus`, `taw-backend`) powinny mieć status **UP**.
 
 ---
 
@@ -52,6 +52,7 @@ Uruchom Grafanę (domyślnie działa na porcie `3000`):
 Otwórz panel: [http://localhost:3000](http://localhost:3000)
 
 Domyślne dane logowania:
+
 - Login: `admin`
 - Hasło: `admin`
 
@@ -78,6 +79,7 @@ Domyślne dane logowania:
 5. Kliknij **Import**
 
 Dashboard jest dostępny w zakładce **Dashboards** i pokazuje metryki:
+
 - Łączna liczba żądań HTTP (`http_requests_total`)
 - Czas odpowiedzi (`http_request_duration_ms`)
 - Aktywne połączenia (`active_connections`)
