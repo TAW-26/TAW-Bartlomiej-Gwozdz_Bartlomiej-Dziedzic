@@ -1,5 +1,6 @@
 import request from "supertest";
 import app from "../app";
+import { createAccessToken } from "../middlewares/auth.middleware";
 import { ORGANIZER_EMAIL, eventBody, resetAndSeed, tokenFor } from "./helpers";
 
 const CONCURRENT_REQUESTS = 50;
@@ -61,5 +62,39 @@ describe(`POST /api/events — ${CONCURRENT_WRITES} równoległych zapisów`, ()
 
     const afterCount: number = (await request(app).get("/api/events").then((r) => r.body as unknown[])).length;
     expect(afterCount).toBe(beforeCount + CONCURRENT_WRITES);
+  });
+});
+
+describe("POST /api/events/:id/join — równoległe dołączanie różnych użytkowników", () => {
+  jest.setTimeout(30_000);
+
+  it("participantsCount odpowiada dokładnie liczbie zaakceptowanych dołączeń", async () => {
+    const CONCURRENT_JOINS = 15;
+
+    const createRes = await request(app)
+      .post("/api/events")
+      .set("Authorization", `Bearer ${organizerToken}`)
+      .send(eventBody({ name: "Wydarzenie pod obciążeniem" }));
+    expect(createRes.status).toBe(201);
+    const eventId: string = createRes.body.id;
+
+    const tokens = Array.from({ length: CONCURRENT_JOINS }, (_, i) =>
+      createAccessToken({ id: `load-user-${i}`, role: "user", email: `load${i}@test.com` }),
+    );
+
+    const statuses = await Promise.all(
+      tokens.map(async (token) => {
+        const res = await request(app)
+          .post(`/api/events/${eventId}/join`)
+          .set("Authorization", `Bearer ${token}`);
+        return res.status;
+      }),
+    );
+
+    const successes = statuses.filter((s) => s === 201).length;
+    expect(successes).toBe(CONCURRENT_JOINS);
+
+    const eventRes = await request(app).get(`/api/events/${eventId}`);
+    expect(eventRes.body.participantsCount).toBe(successes);
   });
 });
