@@ -1,0 +1,137 @@
+{
+  "title": "TAW Backend Monitoring",
+  "uid": "taw-backend-001",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Łączne żądania HTTP",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "sum(http_requests_total)",
+          "legendFormat": "Total",
+          "datasource": { "type": "prometheus" }
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 2,
+      "title": "Błędy 4xx / 5xx",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "sum(http_requests_total{status_code=~\"4..|5..\"})",
+          "legendFormat": "Errors",
+          "datasource": { "type": "prometheus" }
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 1, "color": "red" }] } }
+    },
+    {
+      "id": 3,
+      "title": "RAM procesu (MB)",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes / 1024 / 1024",
+          "legendFormat": "RAM MB",
+          "datasource": { "type": "prometheus" }
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "unit": "MB" }
+    },
+    {
+      "id": 4,
+      "title": "Uptime procesu (s)",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "process_uptime_seconds",
+          "legendFormat": "Uptime",
+          "datasource": { "type": "prometheus" }
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 5,
+      "title": "Żądania / min według metody HTTP",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum by(method)(rate(http_requests_total[1m])) * 60",
+          "legendFormat": "{{method}}",
+          "datasource": { "type": "prometheus" }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Czas odpowiedzi p50 / p95 (ms)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(http_request_duration_ms_bucket[1m]))",
+          "legendFormat": "p50",
+          "datasource": { "type": "prometheus" }
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_ms_bucket[1m]))",
+          "legendFormat": "p95",
+          "datasource": { "type": "prometheus" }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Operacje CRUD (rate/s)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum by(method)(rate(http_requests_total{route=~\"/api/events.*\"}[1m]))",
+          "legendFormat": "{{method}}",
+          "datasource": { "type": "prometheus" }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Aktywne połączenia",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "active_connections",
+          "legendFormat": "Active",
+          "datasource": { "type": "prometheus" }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Błędy API (api_errors_total)",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 4 },
+      "targets": [
+        {
+          "expr": "sum by(type)(api_errors_total)",
+          "legendFormat": "{{type}}",
+          "datasource": { "type": "prometheus" }
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    }
+  ]
+}
