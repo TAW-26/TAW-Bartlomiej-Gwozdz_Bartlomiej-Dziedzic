@@ -2,7 +2,9 @@ import express, { Response } from "express";
 import { EventController } from "./controllers/event.controller";
 import { ModerationController } from "./controllers/moderation.controller";
 import { UserController } from "./controllers/user.controller";
+import { logError } from "./logger";
 import { AuthenticatedRequest, authenticateJWT, requireRoles } from "./middlewares/auth.middleware";
+import { globalErrorHandler } from "./middlewares/errorHandler.middleware";
 import { metricsMiddleware } from "./middlewares/metricsMiddleware";
 import { apiErrorsTotal, register } from "./metrics";
 import { UserRole } from "./types";
@@ -39,6 +41,7 @@ app.get("/api/events", async (req, res: Response) => {
     });
     res.json(events);
   } catch (error) {
+    logError(error, { method: req.method, path: req.path });
     res.status(400).json({
       error: error instanceof Error ? error.message : "Failed to list events",
     });
@@ -56,6 +59,7 @@ app.get(
       });
       return res.json(events);
     } catch (error) {
+      logError(error, { method: req.method, path: req.path, userId: req.user?.id });
       return res.status(403).json({
         error: error instanceof Error ? error.message : "Access denied",
       });
@@ -70,6 +74,7 @@ app.get("/api/events/:id", async (req, res: Response) => {
     });
     res.json(details);
   } catch (error) {
+    logError(error, { method: req.method, path: req.path });
     apiErrorsTotal.inc({ type: "not_found" });
     res.status(404).json({
       error: error instanceof Error ? error.message : "Event not found",
@@ -89,6 +94,7 @@ app.post(
       });
       return res.status(201).json(created);
     } catch (error) {
+      logError(error, { method: req.method, path: req.path, userId: req.user?.id });
       apiErrorsTotal.inc({ type: "bad_request" });
       return res.status(400).json({
         error: error instanceof Error ? error.message : "Failed to create event",
@@ -106,6 +112,7 @@ app.put("/api/events/:id", authenticateJWT, async (req: AuthenticatedRequest, re
     });
     return res.json(updated);
   } catch (error) {
+    logError(error, { method: req.method, path: req.path, userId: req.user?.id });
     return res.status(400).json({
       error: error instanceof Error ? error.message : "Failed to update event",
     });
@@ -120,6 +127,7 @@ app.delete("/api/events/:id", authenticateJWT, async (req: AuthenticatedRequest,
     });
     return res.status(204).send();
   } catch (error) {
+    logError(error, { method: req.method, path: req.path, userId: req.user?.id });
     return res.status(400).json({
       error: error instanceof Error ? error.message : "Failed to delete event",
     });
@@ -137,6 +145,7 @@ app.get(
       });
       return res.json(participants);
     } catch (error) {
+      logError(error, { method: req.method, path: req.path, userId: req.user?.id });
       return res.status(403).json({
         error: error instanceof Error ? error.message : "Access denied",
       });
@@ -155,6 +164,7 @@ app.post(
       });
       return res.status(201).json(result);
     } catch (error) {
+      logError(error, { method: req.method, path: req.path, userId: req.user?.id });
       return res.status(400).json({
         error: error instanceof Error ? error.message : "Failed to join event",
       });
@@ -173,6 +183,7 @@ app.post(
       });
       return res.json(result);
     } catch (error) {
+      logError(error, { method: req.method, path: req.path, userId: req.user?.id });
       return res.status(400).json({
         error: error instanceof Error ? error.message : "Failed to leave event",
       });
@@ -192,6 +203,7 @@ app.delete(
       });
       return res.json(result);
     } catch (error) {
+      logError(error, { method: req.method, path: req.path, userId: req.user?.id });
       return res.status(403).json({
         error: error instanceof Error ? error.message : "Access denied",
       });
@@ -208,6 +220,7 @@ app.post("/api/users/register", async (req, res: Response) => {
     });
     return res.status(201).json(user);
   } catch (error) {
+    logError(error, { method: req.method, path: req.path });
     apiErrorsTotal.inc({ type: "bad_request" });
     return res.status(400).json({
       error: error instanceof Error ? error.message : "Failed to register user",
@@ -222,6 +235,7 @@ app.post("/api/users/login", async (req, res: Response) => {
     });
     return res.json(result);
   } catch (error) {
+    logError(error, { method: req.method, path: req.path });
     return res.status(401).json({
       error: error instanceof Error ? error.message : "Invalid credentials",
     });
@@ -237,6 +251,7 @@ app.get(
       const users = await UserController.listAll({ userId: req.user!.id });
       return res.json(users);
     } catch (error) {
+      logError(error, { method: req.method, path: req.path, userId: req.user?.id });
       return res.status(403).json({
         error: error instanceof Error ? error.message : "Access denied",
       });
@@ -254,6 +269,7 @@ app.get(
       });
       return res.json(events);
     } catch (error) {
+      logError(error, { method: req.method, path: req.path, userId: req.user?.id });
       return res.status(403).json({
         error: error instanceof Error ? error.message : "Access denied",
       });
@@ -278,6 +294,7 @@ app.put(
       });
       return res.json(updated);
     } catch (error) {
+      logError(error, { method: req.method, path: req.path, userId: req.user?.id });
       return res.status(403).json({
         error: error instanceof Error ? error.message : "Failed to update role",
       });
@@ -297,6 +314,7 @@ app.delete(
       });
       return res.status(204).send();
     } catch (error) {
+      logError(error, { method: req.method, path: req.path, userId: req.user?.id });
       return res.status(403).json({
         error: error instanceof Error ? error.message : "Failed to delete user",
       });
@@ -323,11 +341,14 @@ app.post(
       });
       return res.status(201).json(result);
     } catch (error) {
+      logError(error, { method: req.method, path: req.path, userId: req.user?.id });
       return res.status(403).json({
         error: error instanceof Error ? error.message : "Failed to moderate event",
       });
     }
   },
 );
+
+app.use(globalErrorHandler);
 
 export default app;

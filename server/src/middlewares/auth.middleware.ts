@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { logError } from "../logger";
 import { getUserById } from "../store";
 import { UserRole } from "../types";
 
@@ -39,7 +40,8 @@ export const authenticateJWT = (
   try {
     req.user = jwt.verify(token, getJwtSecret()) as AuthUser;
     next();
-  } catch {
+  } catch (error) {
+    logError(error, { method: req.method, path: req.path });
     res.status(401).json({ error: "Token is invalid or has expired" });
   }
 };
