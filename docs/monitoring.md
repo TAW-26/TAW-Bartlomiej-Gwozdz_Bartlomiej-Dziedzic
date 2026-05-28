@@ -19,14 +19,11 @@ scrape_configs:
       - targets: ["localhost:9090"]
         labels:
           app: "prometheus"
-
   - job_name: "taw-backend"
-    metrics_path: "/metrics"
-    scrape_interval: 5s
     static_configs:
       - targets: ["localhost:5000"]
-        labels:
-          app: "taw-backend"
+    metrics_path: "/metrics"
+    scrape_interval: 5s
 ```
 
 Następnie uruchom Prometheusa:
