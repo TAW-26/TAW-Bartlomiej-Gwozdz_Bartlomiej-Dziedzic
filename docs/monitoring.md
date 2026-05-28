@@ -3,8 +3,8 @@
 ## Wymagania
 
 - Uruchomiony serwer Express (port `5000`)
-- Prometheus pobrany i rozpakowany lokalnie
-- Grafana zainstalowana lub pobrana lokalnie
+- Prometheus pobrany i rozpakowany lokalnie (nasza wersja: 3.11.3 windows) https://prometheus.io/download/
+- Grafana zainstalowana lub pobrana lokalnie (nasza wersja: entreprise 13.0.1 + security) https://grafana.com/grafana/download
 
 ---
 
@@ -46,6 +46,8 @@ Uruchom Grafanę (domyślnie działa na porcie `3000`):
 .\bin\grafana-server.exe
 ```
 
+Jeśli nie zadziała, zalecane jest uruchomić z pliku exe
+
 Otwórz panel: [http://localhost:3000](http://localhost:3000)
 
 Domyślne dane logowania:
@@ -63,7 +65,7 @@ Domyślne dane logowania:
    ```
    http://localhost:9090
    ```
-4. Kliknij **Save & test** — powinien pojawić się komunikat `Data source is working`
+4. Kliknij **Save & test** — powinien pojawić się komunikat o poprawnym dodaniu datasource
 
 ---
 
@@ -72,8 +74,7 @@ Domyślne dane logowania:
 1. W Grafanie przejdź do: **Dashboards → Import**
 2. Kliknij **Upload dashboard JSON file**
 3. Wybierz plik `server/grafana-dashboard.json`
-4. W polu **Prometheus** (Data Source) wybierz data source dodany w kroku 3
-5. Kliknij **Import**
+4. Kliknij **Import**
 
 Dashboard jest dostępny w zakładce **Dashboards** i pokazuje metryki:
 
