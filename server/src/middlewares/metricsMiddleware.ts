@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { logRequest } from '../logger';
 import { activeConnections, httpRequestDurationMs, httpRequestsTotal } from '../metrics';
 
 export function metricsMiddleware(req: Request, res: Response, next: NextFunction): void {
@@ -13,6 +14,8 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
     httpRequestsTotal.inc(labels);
     httpRequestDurationMs.observe(labels, durationMs);
     activeConnections.dec();
+
+    logRequest(req.method, route, res.statusCode, durationMs);
   });
 
   next();
