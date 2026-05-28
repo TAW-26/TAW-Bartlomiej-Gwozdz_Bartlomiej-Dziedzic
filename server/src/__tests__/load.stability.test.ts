@@ -1,13 +1,17 @@
 import request from "supertest";
 import app from "../app";
-import { resetAndSeed } from "./helpers";
+import { ORGANIZER_EMAIL, eventBody, resetAndSeed, tokenFor } from "./helpers";
 
 const CONCURRENT_REQUESTS = 50;
 const MAX_AVG_RESPONSE_MS = 200;
 const MAX_SINGLE_RESPONSE_MS = 1000;
+const CONCURRENT_WRITES = 10;
+
+let organizerToken: string;
 
 beforeEach(async () => {
   await resetAndSeed();
+  organizerToken = await tokenFor(ORGANIZER_EMAIL);
 });
 
 describe(`GET /api/events — ${CONCURRENT_REQUESTS} równoległych żądań`, () => {
@@ -30,5 +34,32 @@ describe(`GET /api/events — ${CONCURRENT_REQUESTS} równoległych żądań`, (
 
     const slow = results.filter((r) => r.durationMs >= MAX_SINGLE_RESPONSE_MS);
     expect(slow).toHaveLength(0);
+  });
+});
+
+describe(`POST /api/events — ${CONCURRENT_WRITES} równoległych zapisów`, () => {
+  jest.setTimeout(30_000);
+
+  it("każdy zapis tworzy unikalne wydarzenie, liczba wydarzeń wzrasta dokładnie o liczbę sukcesów", async () => {
+    const beforeCount: number = (await request(app).get("/api/events").then((r) => r.body as unknown[])).length;
+
+    const results = await Promise.all(
+      Array.from({ length: CONCURRENT_WRITES }, async (_, i) => {
+        const res = await request(app)
+          .post("/api/events")
+          .set("Authorization", `Bearer ${organizerToken}`)
+          .send(eventBody({ name: `Load event ${i}` }));
+        return { status: res.status, id: res.body.id as string };
+      }),
+    );
+
+    const created = results.filter((r) => r.status === 201);
+    expect(created).toHaveLength(CONCURRENT_WRITES);
+
+    const ids = new Set(created.map((r) => r.id));
+    expect(ids.size).toBe(CONCURRENT_WRITES);
+
+    const afterCount: number = (await request(app).get("/api/events").then((r) => r.body as unknown[])).length;
+    expect(afterCount).toBe(beforeCount + CONCURRENT_WRITES);
   });
 });
