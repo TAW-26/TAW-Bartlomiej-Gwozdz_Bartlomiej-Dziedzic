@@ -1,0 +1,62 @@
+services:
+  backend:
+    build:
+      context: ./server
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+    volumes:
+      - ./server/secrets.json:/app/secrets.json:ro
+    networks:
+      - taw-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./client
+    ports:
+      - "4200:4200"
+    depends_on:
+      - backend
+    networks:
+      - taw-network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - backend
+    networks:
+      - taw-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./server/grafana-dashboard.json:/var/lib/grafana/dashboards/taw-backend.json:ro
+    depends_on:
+      - prometheus
+    networks:
+      - taw-network
+    restart: unless-stopped
+
+networks:
+  taw-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
