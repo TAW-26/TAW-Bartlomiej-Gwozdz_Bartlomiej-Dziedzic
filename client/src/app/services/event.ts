@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
   CreateEventPayload,
   EventFilters,
@@ -37,9 +37,7 @@ export class EventService {
    * GET /api/events/:id
    */
   getEventById(id: string): Observable<EventItem> {
-    return this.http
-      .get<{ event: EventItem }>(`${this.apiUrl}/${id}`)
-      .pipe(map((res) => res.event));
+    return this.http.get<EventItem>(`${this.apiUrl}/${id}`);
   }
 
   /**
