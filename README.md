@@ -25,8 +25,8 @@ cd server
 npm test
 ```
 
-Backend API: `http://localhost:3000`
-Endpoint testowy: `http://localhost:3000/api/health`
+Backend API: `http://localhost:5000`
+Endpoint testowy: `http://localhost:5000/api/health`
 
 ### Frontend
 
@@ -57,7 +57,7 @@ Uruchamia jednocześnie:
 - Backend: Node.js
 - Baza danych: MongoDB
 - Autentykacja: JWT
-- Autoryzacja: OAuth2
+- Autoryzacja: RBAC (role-based access control)
 
 ## Link do dokumentacji
 - [Dokumentacja projektu](docs/topic_selection.md)
