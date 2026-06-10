@@ -5,6 +5,7 @@ import {
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
 import express from 'express';
+import http from 'node:http';
 import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -13,16 +14,27 @@ const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 /**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
+ * Forward /api requests to the backend service. Target is configurable so the
+ * same build works both in Docker (service name) and standalone deployments.
  */
+const backendUrl = new URL(process.env['BACKEND_URL'] || 'http://localhost:5000');
+app.use('/api', (req, res) => {
+  const proxyReq = http.request(
+    {
+      hostname: backendUrl.hostname,
+      port: backendUrl.port,
+      path: `/api${req.url}`,
+      method: req.method,
+      headers: req.headers,
+    },
+    (proxyRes) => {
+      res.writeHead(proxyRes.statusCode ?? 502, proxyRes.headers);
+      proxyRes.pipe(res);
+    },
+  );
+  proxyReq.on('error', () => res.status(502).end('Bad gateway'));
+  req.pipe(proxyReq);
+});
 
 /**
  * Serve static files from /browser

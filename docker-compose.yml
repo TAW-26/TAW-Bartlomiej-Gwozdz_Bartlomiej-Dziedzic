@@ -17,6 +17,9 @@ services:
       context: ./client
     ports:
       - "4200:4200"
+    environment:
+      - PORT=4200
+      - BACKEND_URL=http://backend:5000
     depends_on:
       - backend
     networks:
