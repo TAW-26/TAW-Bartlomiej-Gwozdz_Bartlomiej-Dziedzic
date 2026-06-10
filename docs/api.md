@@ -2,7 +2,7 @@
 
 ## Adresy bazowe
 
-- Główny adres serwera: `http://localhost:3000`
+- Główny adres serwera: `http://localhost:5000`
 - Główny endpoint testowy: `GET /api/health`
 
 ### Wbudowane konto administratora używane przez serwer:
@@ -23,7 +23,7 @@ GET
 **URL:**
 
 ```
-http://localhost:3000/api/health
+http://localhost:5000/api/health
 ```
 
 **Oczekiwana odpowiedź:**
@@ -46,7 +46,7 @@ POST
 **URL:**
 
 ```
-http://localhost:3000/api/users/register
+http://localhost:5000/api/users/register
 ```
 
 **Zawartość body:**
@@ -73,7 +73,7 @@ POST
 **URL:**
 
 ```
-http://localhost:3000/api/users/login
+http://localhost:5000/api/users/login
 ```
 
 **Zawartość body:**
@@ -111,7 +111,7 @@ POST
 **URL:**
 
 ```
-http://localhost:3000/api/users/login
+http://localhost:5000/api/users/login
 ```
 
 **Zawartość body:**
@@ -149,17 +149,17 @@ GET
 **URL:**
 
 ```
-http://localhost:3000/api/events
+http://localhost:5000/api/events
 ```
 
 **Przykładowe filtry:**
 
 ```
-http://localhost:3000/api/events?q=Python&city=Krakow&category=Edukacja&status=open
+http://localhost:5000/api/events?q=Python&city=Krakow&category=Edukacja&status=open
 ```
 
 ```
-http://localhost:3000/api/events?from=2026-04-20T16:00:00.000Z&to=2026-04-20T19:00:00.000Z
+http://localhost:5000/api/events?from=2026-04-20T16:00:00.000Z&to=2026-04-20T19:00:00.000Z
 ```
 
 ### 6) Szczegóły wydarzenia
@@ -173,7 +173,7 @@ GET
 **URL:**
 
 ```
-http://localhost:3000/api/events/{id_wydarzenia}
+http://localhost:5000/api/events/{id_wydarzenia}
 ```
 
 **Oczekiwana odpowiedź:**
@@ -219,7 +219,7 @@ POST
 **URL:**
 
 ```
-http://localhost:3000/api/events
+http://localhost:5000/api/events
 ```
 
 **Zawartość body:**
@@ -258,7 +258,7 @@ PUT
 **URL:**
 
 ```
-http://localhost:3000/api/events/{id_wydarzenia}
+http://localhost:5000/api/events/{id_wydarzenia}
 ```
 
 **Zawartość body:**
@@ -289,7 +289,7 @@ DELETE
 **URL:**
 
 ```
-http://localhost:3000/api/events/{id_wydarzenia}
+http://localhost:5000/api/events/{id_wydarzenia}
 ```
 
 Oczekiwana odpowiedź: `204 No Content`.
@@ -311,7 +311,7 @@ POST
 **URL:**
 
 ```
-http://localhost:3000/api/events/{id_wydarzenia}/join
+http://localhost:5000/api/events/{id_wydarzenia}/join
 ```
 
 **Autoryzacja:**
@@ -331,7 +331,7 @@ POST
 **URL:**
 
 ```
-http://localhost:3000/api/events/{id_wydarzenia}/leave
+http://localhost:5000/api/events/{id_wydarzenia}/leave
 ```
 
 **Autoryzacja:**
@@ -353,7 +353,7 @@ GET
 **URL:**
 
 ```
-http://localhost:3000/api/events/{id_wydarzenia}/participants
+http://localhost:5000/api/events/{id_wydarzenia}/participants
 ```
 
 **Autoryzacja:**
@@ -375,7 +375,7 @@ GET
 **URL:**
 
 ```
-http://localhost:3000/api/events/organizer/my-events
+http://localhost:5000/api/events/organizer/my-events
 ```
 
 **Autoryzacja:**
@@ -397,7 +397,7 @@ DELETE
 **URL:**
 
 ```
-http://localhost:3000/api/events/{id_wydarzenia}/participants/{id_użytkownika}
+http://localhost:5000/api/events/{id_wydarzenia}/participants/{id_użytkownika}
 ```
 
 **Autoryzacja:**
@@ -419,7 +419,7 @@ GET
 **URL:**
 
 ```
-http://localhost:3000/api/users
+http://localhost:5000/api/users
 ```
 
 **Autoryzacja:**
@@ -441,7 +441,7 @@ GET
 **URL:**
 
 ```
-http://localhost:3000/api/users/me/events
+http://localhost:5000/api/users/me/events
 ```
 
 **Oczekiwana odpowiedź:** lista wydarzeń, do których użytkownik już dołączył. Każdy element ma taki sam format jak `GET /api/events`.
@@ -465,7 +465,7 @@ PUT
 **URL:**
 
 ```
-http://localhost:3000/api/users/{id_użytkownika}/role
+http://localhost:5000/api/users/{id_użytkownika}/role
 ```
 
 **Zawartość body:**
@@ -495,7 +495,7 @@ DELETE
 **URL:**
 
 ```
-http://localhost:3000/api/users/{id_użytkownika}
+http://localhost:5000/api/users/{id_użytkownika}
 ```
 
 **Autoryzacja:**
@@ -517,7 +517,7 @@ POST
 **URL:**
 
 ```
-http://localhost:3000/api/moderation/remove-event
+http://localhost:5000/api/moderation/remove-event
 ```
 
 **Zawartość body:**
