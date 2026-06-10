@@ -59,4 +59,4 @@ Celem aplikacji jest:
 | Backend | Node.js |
 | Baza Danych | MongoDB |
 | Autentykacja | JWT (JSON Web Token) |
-| Autoryzacja | OAuth2 |
+| Autoryzacja | RBAC (role-based access control) |
