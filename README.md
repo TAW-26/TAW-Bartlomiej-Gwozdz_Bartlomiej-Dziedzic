@@ -52,6 +52,15 @@ Uruchamia jednocześnie:
 - Prometheus: `http://localhost:9090`
 - Grafana: `http://localhost:3001` (login: `admin` / `admin`, dashboard "TAW Backend Monitoring" wczytuje się automatycznie)
 
+### Wersja produkcyjna
+
+Wersja produkcyjna aplikacji znajduje się na gałęzi `docker-production` i uruchamia się w ten sam sposób co wersja deweloperska:
+
+```bash
+git checkout docker-production
+docker compose up --build
+```
+
 ## Użyte technologie
 - Frontend: Angular
 - Backend: Node.js
