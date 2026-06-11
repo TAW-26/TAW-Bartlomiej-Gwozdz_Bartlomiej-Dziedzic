@@ -25,8 +25,8 @@ cd server
 npm test
 ```
 
-Backend API: `http://localhost:3000`
-Endpoint testowy: `http://localhost:3000/api/health`
+Backend API: `http://localhost:5000`
+Endpoint testowy: `http://localhost:5000/api/health`
 
 ### Frontend
 
@@ -52,12 +52,21 @@ Uruchamia jednocześnie:
 - Prometheus: `http://localhost:9090`
 - Grafana: `http://localhost:3001` (login: `admin` / `admin`, dashboard "TAW Backend Monitoring" wczytuje się automatycznie)
 
+### Wersja produkcyjna
+
+Wersja produkcyjna aplikacji znajduje się na gałęzi `docker-production` i uruchamia się w ten sam sposób co wersja deweloperska:
+
+```bash
+git checkout docker-production
+docker compose up --build
+```
+
 ## Użyte technologie
 - Frontend: Angular
 - Backend: Node.js
 - Baza danych: MongoDB
 - Autentykacja: JWT
-- Autoryzacja: OAuth2
+- Autoryzacja: RBAC (role-based access control)
 
 ## Link do dokumentacji
 - [Dokumentacja projektu](docs/topic_selection.md)
